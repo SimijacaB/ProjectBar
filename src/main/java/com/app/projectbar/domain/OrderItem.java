@@ -3,23 +3,27 @@ package com.app.projectbar.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+
 @Setter
 @Getter
 @Builder
 @Entity
-@Table(name = "inventory")
+@Table(name = "order_item")
 @AllArgsConstructor
 @NoArgsConstructor
-public class Inventory {
+public class OrderItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
-    private String code;
+    private String productName;
 
-    @Column(nullable = false)
     private Integer quantity;
+
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    private Order order;
+
 
 }
