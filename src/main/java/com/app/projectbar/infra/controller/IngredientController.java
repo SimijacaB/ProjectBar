@@ -3,6 +3,7 @@ package com.app.projectbar.infra.controller;
 import com.app.projectbar.application.IIngredientService;
 import com.app.projectbar.domain.dto.IngredientRequestDTO;
 import com.app.projectbar.domain.dto.IngredientResponseDTO;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +33,7 @@ public class IngredientController {
     }
 
     @PostMapping("/save")
-    public ResponseEntity<IngredientResponseDTO> save(@RequestBody IngredientRequestDTO ingredientRequest) {
+    public ResponseEntity<IngredientResponseDTO> save(@RequestBody @Valid IngredientRequestDTO ingredientRequest) {
         return ResponseEntity.ok(ingredientService.save(ingredientRequest));
     }
     @DeleteMapping("/delete/{code}")

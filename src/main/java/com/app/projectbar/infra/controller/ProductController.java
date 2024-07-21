@@ -1,10 +1,12 @@
 package com.app.projectbar.infra.controller;
 
 import com.app.projectbar.application.IProductService;
+import com.app.projectbar.domain.Category;
 import com.app.projectbar.domain.dto.ProductForListResponseDTO;
 import com.app.projectbar.domain.dto.ProductRequestDTO;
 import com.app.projectbar.domain.dto.ProductResponseDTO;
 import com.app.projectbar.domain.dto.UpdateProductRequestDTO;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.sql.Update;
 import org.springframework.http.HttpStatus;
@@ -21,12 +23,12 @@ public class ProductController {
     private final IProductService productService;
 
     @PostMapping("/save")
-    public ResponseEntity<ProductResponseDTO> save(@RequestBody ProductRequestDTO productRequest){
+    public ResponseEntity<ProductResponseDTO> save(@RequestBody @Valid ProductRequestDTO productRequest){
         return ResponseEntity.ok(productService.save(productRequest));
     }
 
     @PutMapping("/update")
-    public ResponseEntity<ProductResponseDTO> update(@RequestBody UpdateProductRequestDTO productToUpdate){
+    public ResponseEntity<ProductResponseDTO> update(@RequestBody @Valid UpdateProductRequestDTO productToUpdate){
         return ResponseEntity.ok(productService.update(productToUpdate));
     }
 
@@ -57,7 +59,8 @@ public class ProductController {
     @GetMapping("/find-by-category/{category}")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<ProductForListResponseDTO>> findByCategory(@PathVariable String category){
-        return ResponseEntity.ok(productService.findByCategory(category));
+        Category categoryEnum = Category.valueOf(category.toUpperCase());
+        return ResponseEntity.ok(productService.findByCategory(categoryEnum));
     }
 
     @DeleteMapping("/delete/{code}")

@@ -82,7 +82,7 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public List<ProductForListResponseDTO> findByCategory(String category) {
+    public List<ProductForListResponseDTO> findByCategory(Category category) {
         var productList = productRepository.findByCategory(category)
                 .orElseThrow(() -> new RuntimeException("Products with name " + category + " not found"));
 
@@ -98,7 +98,7 @@ public class ProductServiceImpl implements IProductService {
         product.setPrice(productRequest.getPrice());
         product.setPhotoId(productRequest.getPhotoId());
         product.setIsPrepared(productRequest.getIsPrepared());
-        product.setCategory(Category.valueOf(productRequest.getCategory()));
+        product.setCategory(productRequest.getCategory());
 
         // Eliminar las relaciones actuales si es una actualización
         if (product.getId() != null) {

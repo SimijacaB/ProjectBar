@@ -1,5 +1,6 @@
 package com.app.projectbar.infra.repositories;
 
+import com.app.projectbar.domain.Category;
 import com.app.projectbar.domain.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -14,6 +15,6 @@ public interface IProductRepository extends JpaRepository <Product, Long>{
 
     Optional<List<Product>> findByName(String name);
 
-    Optional<List<Product>> findByCategory(String category);
+    Optional<List<Product>> findByCategory(Category category);
 
 }

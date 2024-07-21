@@ -1,5 +1,6 @@
 package com.app.projectbar.domain.dto;
 
+import com.app.projectbar.domain.Category;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,6 +16,7 @@ public class ProductForListResponseDTO {
     private String name;
     private String code;
     private String description;
+    private Category category;
 
 
 }

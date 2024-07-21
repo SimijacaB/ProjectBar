@@ -1,5 +1,8 @@
 package com.app.projectbar.domain.dto;
 
+import com.app.projectbar.domain.Category;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,14 +19,16 @@ public class ProductRequestDTO {
 
     @NotBlank
     @Pattern(regexp = "^[a-zA-Z\\s\\p{Punct}]+$")
-    @Min(10)
+    @Size(min = 10, message = "Name must have at least 10 characters")
     private String name;
 
-    @Pattern(regexp = "^[A-Z0-9-]{11}$")
+    @Pattern(regexp = "^[A-Z]{1}[0-9]{2}-{1}[A-Z]{2}-{1}[0-9]{4}[A-Z]{1}$")
     private String code;
-    private String description;
 
     @NotBlank
+    private String description;
+
+    @NotNull
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
     private Double price;
 
@@ -33,7 +38,8 @@ public class ProductRequestDTO {
     private Boolean isPrepared;
 
     @NotNull
-    private String category;
+    @Enumerated(EnumType.STRING)
+    private Category category;
 
     private List<ProductIngredientRequestDTO> ingredients;
 

@@ -1,5 +1,6 @@
 package com.app.projectbar.application;
 
+import com.app.projectbar.domain.Category;
 import com.app.projectbar.domain.dto.ProductForListResponseDTO;
 import com.app.projectbar.domain.dto.ProductRequestDTO;
 import com.app.projectbar.domain.dto.ProductResponseDTO;
@@ -23,5 +24,5 @@ public interface IProductService {
 
     void delete(String code);
 
-    List<ProductForListResponseDTO> findByCategory(String category);
+    List<ProductForListResponseDTO> findByCategory(Category category);
 }

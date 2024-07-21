@@ -22,7 +22,7 @@ public class UpdateProductRequestDTO {
     @Min(10)
     private String name;
 
-    @Pattern(regexp = "^[A-Z0-9-]{9}$")
+    @Pattern(regexp = "^[A-Z]{1}[0-9]{2}-{1}[A-Z]{2}-{1}[0-9]{4}[A-Z]{1}$")
     private String code;
 
     @NotBlank
@@ -30,7 +30,7 @@ public class UpdateProductRequestDTO {
     @Min(10)
     private String description;
 
-    @NotBlank
+    @NotNull
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
     private Double price;
 

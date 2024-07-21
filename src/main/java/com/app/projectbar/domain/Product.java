@@ -32,6 +32,7 @@ public class Product {
     private Long photoId;
 
     private Double price;
+
     @Column(name = "is_prepared")
     private Boolean isPrepared;
 
