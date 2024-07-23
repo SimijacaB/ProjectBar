@@ -1,6 +1,14 @@
 package com.app.projectbar.application;
 
 
+import com.app.projectbar.domain.OrderItem;
+import com.app.projectbar.domain.OrderStatus;
+import com.app.projectbar.domain.dto.OrderItemRequestDTO;
+import com.app.projectbar.domain.dto.OrderItemResponseDTO;
+import com.app.projectbar.domain.dto.OrderRequestDTO;
+import com.app.projectbar.domain.dto.OrderResponseDTO;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,8 +24,15 @@ public interface IOrderService {
 
     List<OrderResponseDTO> findByDate(LocalDate date);
 
-    List<OrderResponseDTO> findByStatus(Status status);
+    List<OrderResponseDTO> findByStatus(OrderStatus status);
 
+    OrderItemResponseDTO addOrderItem(OrderItemRequestDTO orderItemToAdd);
+
+    void removeOrderItem(Long idOrderItem);
+
+    OrderResponseDTO changeStatus(String newStatus);
+
+    Double calculateValueToPay(OrderRequestDTO orderRequestDTO);
 
 
 }

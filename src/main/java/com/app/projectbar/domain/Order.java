@@ -35,7 +35,7 @@ public class Order {
     private String notes;
 
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private OrderStatus status;
 
     @DateTimeFormat(pattern = "dd-MM-yyyy HH:mm:ss")
     private LocalDateTime date;
