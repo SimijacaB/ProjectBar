@@ -3,10 +3,7 @@ package com.app.projectbar.application;
 
 import com.app.projectbar.domain.OrderItem;
 import com.app.projectbar.domain.OrderStatus;
-import com.app.projectbar.domain.dto.OrderItemRequestDTO;
-import com.app.projectbar.domain.dto.OrderItemResponseDTO;
-import com.app.projectbar.domain.dto.OrderRequestDTO;
-import com.app.projectbar.domain.dto.OrderResponseDTO;
+import com.app.projectbar.domain.dto.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,23 +13,30 @@ public interface IOrderService {
 
     OrderResponseDTO save(OrderRequestDTO orderRequest);
 
-    List<OrderResponseDTO> findByClientName(String name);
+    List<OrderForListResponseDTO> findAll();
 
-    List<OrderResponseDTO> findByTableNumber(Integer tableNumber);
+    OrderResponseDTO findById(Long id);
+    OrderResponseDTO updateOrder(UpdateOrderDTO updateOrderDTO);
 
-    List<OrderResponseDTO> findByIdWaiter(Long id);
+    void deleteOrder(Long id);
 
-    List<OrderResponseDTO> findByDate(LocalDate date);
+    List<OrderForListResponseDTO> findByClientName(String name);
 
-    List<OrderResponseDTO> findByStatus(OrderStatus status);
+    List<OrderForListResponseDTO> findByTableNumber(Integer tableNumber);
 
-    OrderItemResponseDTO addOrderItem(OrderItemRequestDTO orderItemToAdd);
+    List<OrderForListResponseDTO> findByIdWaiter(Long id);
 
-    void removeOrderItem(Long idOrderItem);
+    List<OrderForListResponseDTO> findByDate(LocalDate date);
 
-    OrderResponseDTO changeStatus(String newStatus);
+    List<OrderForListResponseDTO> findByStatus(OrderStatus status);
 
-    Double calculateValueToPay(OrderRequestDTO orderRequestDTO);
+    OrderResponseDTO addOrderItem(Long id, OrderItemRequestDTO orderItemToAdd);
+
+    OrderResponseDTO removeOrderItem(Long id, Long idOrderItem);
+
+    OrderResponseDTO changeStatus(Long id, String newStatus);
+
+   // Double calculateValueToPay(OrderRequestDTO orderRequestDTO);
 
 
 }

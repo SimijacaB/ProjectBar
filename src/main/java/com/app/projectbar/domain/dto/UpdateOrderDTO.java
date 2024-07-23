@@ -11,12 +11,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class OrderItemRequestDTO {
+public class UpdateOrderDTO {
+    @NotNull
+    private Long id;
 
     @NotBlank
-    private String productName;
+    private String clientName;
 
     @NotNull
-    private Integer quantity;
+    private Integer tableNumber;
 
+    private String notes;
 }
