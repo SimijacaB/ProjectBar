@@ -20,6 +20,8 @@ public class Ingredient {
     private Long id;
     private String code;
     private String name;
+
+    @Enumerated(EnumType.STRING)
     private UnitOfMeasure unitOfMeasure;
     @OneToMany(mappedBy = "ingredient", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductIngredient> product = new ArrayList<>();

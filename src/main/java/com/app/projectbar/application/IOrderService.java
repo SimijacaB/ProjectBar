@@ -24,7 +24,7 @@ public interface IOrderService {
 
     List<OrderForListResponseDTO> findByTableNumber(Integer tableNumber);
 
-    List<OrderForListResponseDTO> findByIdWaiter(Long id);
+    List<OrderForListResponseDTO> findByWaiterId(String id);
 
     List<OrderForListResponseDTO> findByDate(LocalDate date);
 

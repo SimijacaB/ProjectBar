@@ -11,19 +11,15 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class IOrderItemServiceImpl implements IOrderItemService {
+public class OrderItemServiceImpl implements IOrderItemService {
 
     private final IOrderItemRepository orderItemRepository;
     private final ModelMapper modelMapper;
 
     @Override
     public OrderItemResponseDTO save(OrderItemRequestDTO orderItemRequestDTO) {
-
-        var orderItem = new OrderItem();
-        orderItem.setProductName(orderItemRequestDTO.getProductName());
-        orderItem.setQuantity(orderItemRequestDTO.getQuantity());
-        orderItem.
-
-        return orderItemRepository.save(orderItem);
+        OrderItem orderItem = modelMapper.map(orderItemRequestDTO, OrderItem.class);
+        orderItemRepository.save(orderItem);
+        return modelMapper.map(orderItem, OrderItemResponseDTO.class);
     }
 }

@@ -13,7 +13,7 @@ public interface IOrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByTableNumber(Integer tableNumber);
 
-    List<Order> findByIdWaiter(Long id);
+    List<Order> findByWaiterId(String id);
 
     List<Order> findByStatus(OrderStatus status);
 }

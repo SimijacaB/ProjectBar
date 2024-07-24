@@ -31,24 +31,23 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public OrderResponseDTO save(OrderRequestDTO orderRequest) {
-        var order = new Order();
-
-        order.setClientName(orderRequest.getClientName());
-        order.setTableNumber(orderRequest.getTableNumber());
-        order.setDate(LocalDateTime.now());
-        order.setStatus(OrderStatus.PENDING);
-        order.setNotes(orderRequest.getNotes());
-
+        Order order = Order.builder()
+                .clientName(orderRequest.getClientName())
+                .tableNumber(orderRequest.getTableNumber())
+                .date(LocalDateTime.now())
+                .status(OrderStatus.PENDING)
+                .notes(orderRequest.getNotes())
+                .build();
         orderRepository.save(order);
-
-        List<OrderItemRequestDTO> orderProducts = orderRequest.getOrderProducts();
-
-        order.setOrderProducts(orderProducts.stream().map(orderProduct -> modelMapper.map(orderProduct, OrderItem.class)).toList());
-
-        order.getOrderProducts().forEach(orderItem -> {
-            orderItem.setOrder(order);
-            orderItemRepository.save(orderItem);
-        });
+//
+//        List<OrderItemRequestDTO> orderProducts = orderRequest.getOrderProducts();
+//
+//        order.setOrderProducts(orderProducts.stream().map(orderProduct -> modelMapper.map(orderProduct, OrderItem.class)).toList());
+//
+//        order.getOrderProducts().forEach(orderItem -> {
+//            orderItem.setOrder(order);
+//            orderItemRepository.save(orderItem);
+//        });
         return modelMapper.map(order, OrderResponseDTO.class);
     }
 
@@ -97,8 +96,8 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
-    public List<OrderForListResponseDTO> findByIdWaiter(Long id) {
-        List<Order> orders = orderRepository.findByIdWaiter(id);
+    public List<OrderForListResponseDTO> findByWaiterId(String id) {
+        List<Order> orders = orderRepository.findByWaiterId(id);
         return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
     }
 
@@ -115,15 +114,46 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public OrderResponseDTO addOrderItem(Long id, OrderItemRequestDTO orderItemToAdd) {
-        Optional<Order> orderOptional = orderRepository.findById(id);
-        if(orderOptional.isEmpty()){
-            throw new RuntimeException("Order with id " + id + " not found");
-        }
-        Order order = orderOptional.get();
-        order.getOrderProducts().add(modelMapper.map(orderItemToAdd, OrderItem.class));
-        
 
-        return modelMapper.map(orderRepository.save(order), OrderResponseDTO.class);
+        // SOLUCIÓN 1
+//        Optional<Order> orderOptional = orderRepository.findById(id);
+//        if(orderOptional.isEmpty()){
+//            throw new RuntimeException("Order with id " + id + " not found");
+//        }
+//        Order order = orderOptional.get();
+//        order.getOrderProducts().add(modelMapper.map(orderItemToAdd, OrderItem.class));
+//
+//
+//        return modelMapper.map(orderRepository.save(order), OrderResponseDTO.class);
+
+        // SOLUCIÓN 2
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow( () -> new RuntimeException("Order not found with id: " + " id"));
+
+        OrderItem orderItem = OrderItem.builder()
+                .productName(orderItemToAdd.getProductName())
+                .quantity(orderItemToAdd.getQuantity())
+                .order(order)
+                .build();
+
+        order.getOrderProducts().add(orderItem);
+
+        double total = order.getOrderProducts().stream()
+                .mapToDouble(item -> item.getQuantity() * productRepository.findByName(item.getProductName()).get().stream().findFirst().get().getPrice())
+                .sum();
+
+        order.setValueToPay(total);
+
+        orderItemRepository.save(orderItem);
+
+        order.setStatus(OrderStatus.PENDING);
+
+        order = orderRepository.save(order);
+
+        return modelMapper.map(order, OrderResponseDTO.class);
+
+
     }
 
     @Override
