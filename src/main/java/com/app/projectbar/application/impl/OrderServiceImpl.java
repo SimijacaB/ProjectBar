@@ -129,7 +129,7 @@ public class OrderServiceImpl implements IOrderService {
         // SOLUCIÓN 2
 
         Order order = orderRepository.findById(id)
-                .orElseThrow( () -> new RuntimeException("Order not found with id: " + " id"));
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + " id"));
 
         OrderItem orderItem = OrderItem.builder()
                 .productName(orderItemToAdd.getProductName())
@@ -142,6 +142,7 @@ public class OrderServiceImpl implements IOrderService {
         double total = order.getOrderProducts().stream()
                 .mapToDouble(item -> item.getQuantity() * productRepository.findByName(item.getProductName()).get().stream().findFirst().get().getPrice())
                 .sum();
+
 
         order.setValueToPay(total);
 
@@ -159,11 +160,22 @@ public class OrderServiceImpl implements IOrderService {
     @Override
     public OrderResponseDTO removeOrderItem(Long id, Long idOrderItem) {
         Optional<Order> orderOptional = orderRepository.findById(id);
-        if(orderOptional.isEmpty()){
+        if (orderOptional.isEmpty()) {
             throw new RuntimeException("Order with id " + id + " not found");
         }
         Order order = orderOptional.get();
-        order.getOrderProducts().remove(modelMapper.map(idOrderItem, OrderItem.class));
+
+        OrderItem orderItem = order.getOrderProducts()
+                .stream()
+                .filter(findOrderItem -> findOrderItem.getId() == idOrderItem)
+                        .findFirst().get();
+
+        System.out.println(orderItem);
+
+
+        order.getOrderProducts().remove(modelMapper.map(orderItem, OrderItem.class));
+        order.setOrderProducts(order.getOrderProducts());
+
 
         return modelMapper.map(orderRepository.save(order), OrderResponseDTO.class);
 
@@ -172,7 +184,7 @@ public class OrderServiceImpl implements IOrderService {
     @Override
     public OrderResponseDTO changeStatus(Long id, String newStatus) {
         Optional<Order> orderOptional = orderRepository.findById(id);
-        if(orderOptional.isEmpty()){
+        if (orderOptional.isEmpty()) {
             throw new RuntimeException("Order with id " + id + " not found");
         }
         Order order = orderOptional.get();

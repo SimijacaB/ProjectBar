@@ -42,8 +42,14 @@ public class Order {
     private LocalDateTime date;
 
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true )
     @JsonManagedReference
     private List<OrderItem> orderProducts;
 
+    @PrePersist //Se ejecuta antes de que se guarde en la base de datos
+    protected void onCreate() {
+        if (status == null) {
+            status = OrderStatus.PENDING;
+        }
+    }
 }

@@ -23,7 +23,7 @@ public class OrderController {
     public ResponseEntity<OrderResponseDTO> save(@RequestBody @Valid OrderRequestDTO orderRequestDTO){
         return ResponseEntity.ok(orderService.save(orderRequestDTO));
     }
-    @GetMapping("/finAll")
+    @GetMapping("/all")
     public ResponseEntity<List<OrderForListResponseDTO>> findAll(){
         return ResponseEntity.ok(orderService.findAll());
     }

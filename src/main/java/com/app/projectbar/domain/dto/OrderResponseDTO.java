@@ -2,6 +2,7 @@ package com.app.projectbar.domain.dto;
 
 
 import com.app.projectbar.domain.OrderItem;
+import com.app.projectbar.domain.OrderStatus;
 import com.app.projectbar.domain.Status;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -29,7 +30,7 @@ public class OrderResponseDTO {
 
     private String notes;
 
-    private Status status;
+    private OrderStatus status;
 
     private LocalDateTime date;
 
