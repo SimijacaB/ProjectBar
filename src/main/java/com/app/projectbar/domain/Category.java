@@ -5,6 +5,6 @@ public enum Category {
     BEER,
     WINE,
     COCKTAILS,
-   JUICES
+    JUICES
 
 }

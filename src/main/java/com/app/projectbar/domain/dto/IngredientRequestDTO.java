@@ -22,7 +22,7 @@ public class IngredientRequestDTO {
 
     @NotBlank
     @Pattern(regexp = "^[a-zA-Z\\s\\p{Punct}]+$")
-    @Size(min = 10, message = "Name must have at least 10 characters")
+    @Size(min = 3, message = "Name must have at least 10 characters")
     private String name;
 
     @NotNull

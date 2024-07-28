@@ -1,9 +1,11 @@
 package com.app.projectbar.application.impl;
 
 import com.app.projectbar.application.IInventoryService;
+import com.app.projectbar.domain.Ingredient;
 import com.app.projectbar.domain.Inventory;
 import com.app.projectbar.domain.Product;
 import com.app.projectbar.domain.dto.InventoryDTO;
+import com.app.projectbar.infra.repositories.IIngredientRepository;
 import com.app.projectbar.infra.repositories.IInventoryRepository;
 import com.app.projectbar.infra.repositories.IProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +21,14 @@ public class InventoryServiceImpl implements IInventoryService {
 
     private final IInventoryRepository inventoryRepository;
     private final IProductRepository productRepository;
+    private final IIngredientRepository ingredientRepository;
     private final ModelMapper modelMapper;
 
     @Override
     public InventoryDTO save(InventoryDTO inventoryRequest) {
         Optional<Product> product = productRepository.findByCode(inventoryRequest.getCode());
-        if(product.isEmpty()){
+        Optional<Ingredient> ingredient = ingredientRepository.findByCode(inventoryRequest.getCode());
+        if(product.isEmpty() && ingredient.isEmpty()){
             throw new RuntimeException("Product not found by code " + inventoryRequest.getCode());
         }
         Inventory inventory = inventoryRepository.save(modelMapper.map(inventoryRequest, Inventory.class));

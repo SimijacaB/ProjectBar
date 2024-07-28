@@ -54,7 +54,7 @@ public class OrderController {
 
     @PutMapping("/change-status/{idOrder}/{status}")
     @Transactional
-    public ResponseEntity<OrderResponseDTO> removeOrderItem( @PathVariable Long idOrder, @PathVariable String status){
+    public ResponseEntity<OrderResponseDTO> changeStatusOrder( @PathVariable Long idOrder, @PathVariable String status){
         return ResponseEntity.ok(orderService.changeStatus(idOrder, status));
     }
 

@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface IIngredientRepository extends JpaRepository<Ingredient, Long> {
 
         Optional<Ingredient> findByName(String name);
-        Optional<Object> findByCode(String code);
+        Optional<Ingredient> findByCode(String code);
 
         void deleteByCode(String code);
 }
