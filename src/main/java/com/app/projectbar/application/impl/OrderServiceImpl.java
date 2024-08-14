@@ -1,10 +1,7 @@
 package com.app.projectbar.application.impl;
 
 import com.app.projectbar.application.IOrderService;
-import com.app.projectbar.domain.Inventory;
-import com.app.projectbar.domain.Order;
-import com.app.projectbar.domain.OrderItem;
-import com.app.projectbar.domain.OrderStatus;
+import com.app.projectbar.domain.*;
 import com.app.projectbar.domain.dto.*;
 import com.app.projectbar.infra.repositories.IInventoryRepository;
 import com.app.projectbar.infra.repositories.IOrderItemRepository;
@@ -108,19 +105,6 @@ public class OrderServiceImpl implements IOrderService {
     @Override
     public OrderResponseDTO addOrderItem(Long id, OrderItemRequestDTO orderItemToAdd) {
 
-        // SOLUCIÓN 1
-//        Optional<Order> orderOptional = orderRepository.findById(id);
-//        if(orderOptional.isEmpty()){
-//            throw new RuntimeException("Order with id " + id + " not found");
-//        }
-//        Order order = orderOptional.get();
-//        order.getOrderProducts().add(modelMapper.map(orderItemToAdd, OrderItem.class));
-//
-//
-//        return modelMapper.map(orderRepository.save(order), OrderResponseDTO.class);
-
-        // SOLUCIÓN 2
-
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + " id"));
 
@@ -130,7 +114,24 @@ public class OrderServiceImpl implements IOrderService {
                 .order(order)
                 .build();
 
-        order.getOrderProducts().add(orderItem);
+        OrderItem orderItemExists = null;
+
+
+        for (OrderItem oi : order.getOrderProducts()) {
+            if (oi.getProductName().equalsIgnoreCase(orderItem.getProductName())) {
+                orderItemExists = oi;
+                break;
+            }
+        }
+
+        if (orderItemExists != null) {
+            orderItemExists.setQuantity(orderItemToAdd.getQuantity() + orderItemExists.getQuantity());
+            orderItemRepository.save(orderItemExists);
+
+        } else {
+            order.getOrderProducts().add(orderItem);
+            orderItemRepository.save(orderItem);
+        }
 
         double total = order.getOrderProducts().stream()
                 .mapToDouble(item -> item.getQuantity() * productRepository.findByName(item.getProductName()).get().stream().findFirst().get().getPrice())
@@ -138,9 +139,7 @@ public class OrderServiceImpl implements IOrderService {
 
 
         order.setValueToPay(total);
-
-        orderItemRepository.save(orderItem);
-
+        
         order.setStatus(OrderStatus.PENDING);
 
         order = orderRepository.save(order);
@@ -159,7 +158,7 @@ public class OrderServiceImpl implements IOrderService {
         OrderItem orderItem = order.getOrderProducts()
                 .stream()
                 .filter(findOrderItem -> findOrderItem.getId() == idOrderItem)
-                        .findFirst().get();
+                .findFirst().get();
 
 
         order.getOrderProducts().remove(modelMapper.map(orderItem, OrderItem.class));
@@ -177,7 +176,6 @@ public class OrderServiceImpl implements IOrderService {
         }
         Order order = orderOptional.get();
 
-
         //Solo entra aquí si el estado a cambiar  a ready(Cambiar la opcion de estado), es decir una vez esa
         // orden este en ese estado va a tomar todos los orderItem y va a inventory y  descontar esas cantidades.
         if (newStatus.equals(OrderStatus.READY.toString())) {
@@ -192,23 +190,34 @@ public class OrderServiceImpl implements IOrderService {
         return modelMapper.map(orderRepository.save(order), OrderResponseDTO.class);
     }
 
-    private void deductInventory(OrderItem orderItem){
+    private void deductInventory(OrderItem orderItem) {
 
         String code = productRepository.findByName(orderItem.getProductName())
                 .stream().findFirst().get().get(0).getCode();
 
-        Optional<Inventory> inventory = inventoryRepository.findByCode(code);
+        Product product = productRepository.findByCode(code).get();
+        if (!product.getIsPrepared()) {
+            Optional<Inventory> inventory = inventoryRepository.findByCode(code);
 
-        //Hay que hacer agregar lógica de los productos que requieren preparación,
-        // ya que esta validando los que hay en inventario, y como no tenemos
-        // por ejemplo "Margarita" , arroja que el producto no existe.
+            if (inventory.isEmpty()) {
+                throw new RuntimeException("Product with id " + code + " not found");
+            }
 
-        if(inventory.isEmpty()){
-            throw  new RuntimeException("Product with id " + code + " not found");
+            inventory.get().setQuantity(inventory.get().getQuantity() - orderItem.getQuantity());
+            inventoryRepository.save(inventory.get());
+        } else {
+            for (ProductIngredient productIngredient : product.getProductIngredients()) {
+                Optional<Inventory> inventory = inventoryRepository.findByCode(productIngredient.getIngredient().getCode());
+
+                if (inventory.isEmpty()) {
+                    throw new RuntimeException("Ingredient with id " + code + " not found");
+                }
+                inventory.get().setQuantity((int) (inventory.get().getQuantity() - (orderItem.getQuantity() * productIngredient.getAmount())));
+                inventoryRepository.save(inventory.get());
+            }
+
         }
 
-        inventory.get().setQuantity(inventory.get().getQuantity() - orderItem.getQuantity());
-        inventoryRepository.save(inventory.get());
 
     }
 

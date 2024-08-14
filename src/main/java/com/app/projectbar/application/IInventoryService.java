@@ -2,20 +2,21 @@ package com.app.projectbar.application;
 
 import com.app.projectbar.domain.Inventory;
 import com.app.projectbar.domain.dto.InventoryDTO;
+import com.app.projectbar.domain.dto.InventoryResponseDTO;
 
 import java.util.List;
 
 public interface IInventoryService {
 
-    InventoryDTO save(InventoryDTO inventoryRequest);
+    InventoryResponseDTO save(InventoryDTO inventoryRequest);
 
-    InventoryDTO addStock(Integer quantityToAdd, String code);
+    InventoryResponseDTO addStock(Integer quantityToAdd, String code);
 
-    InventoryDTO deductStock(Integer quantity, String code);
+    InventoryResponseDTO deductStock(Integer quantity, String code);
 
-    List<InventoryDTO> findAll();
+    List<InventoryResponseDTO> findAll();
 
-    InventoryDTO findByCode(String code);
+    InventoryResponseDTO findByCode(String code);
 
     void deleteByCode(String code);
 
