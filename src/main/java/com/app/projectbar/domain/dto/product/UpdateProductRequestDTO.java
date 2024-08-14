@@ -1,6 +1,7 @@
-package com.app.projectbar.domain.dto;
+package com.app.projectbar.domain.dto.product;
 
 
+import com.app.projectbar.domain.dto.productIngredient.ProductIngredientRequestDTO;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

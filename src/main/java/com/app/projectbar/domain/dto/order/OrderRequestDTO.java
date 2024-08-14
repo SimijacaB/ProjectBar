@@ -1,9 +1,6 @@
-package com.app.projectbar.domain.dto;
+package com.app.projectbar.domain.dto.order;
 
-import com.app.projectbar.domain.OrderItem;
-import com.app.projectbar.domain.Status;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -13,7 +10,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data

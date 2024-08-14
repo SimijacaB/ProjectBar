@@ -1,8 +1,7 @@
 package com.app.projectbar.application;
 
-import com.app.projectbar.domain.Inventory;
-import com.app.projectbar.domain.dto.InventoryDTO;
-import com.app.projectbar.domain.dto.InventoryResponseDTO;
+import com.app.projectbar.domain.dto.inventory.InventoryDTO;
+import com.app.projectbar.domain.dto.inventory.InventoryResponseDTO;
 
 import java.util.List;
 

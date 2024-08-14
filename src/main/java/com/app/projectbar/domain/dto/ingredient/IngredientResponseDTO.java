@@ -1,6 +1,5 @@
-package com.app.projectbar.domain.dto;
+package com.app.projectbar.domain.dto.ingredient;
 
-import com.app.projectbar.domain.Category;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,13 +9,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProductForListResponseDTO {
+public class IngredientResponseDTO {
 
     private Long id;
-    private String name;
+
     private String code;
-    private String description;
-    private Category category;
+
+    private String name;
+
+    private String unitOfMeasure;
 
 
 }

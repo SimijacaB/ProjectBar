@@ -1,4 +1,4 @@
-package com.app.projectbar.domain.dto;
+package com.app.projectbar.domain.dto.orderItem;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,15 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class IngredientResponseDTO {
+public class OrderItemResponseDTO {
 
     private Long id;
-
-    private String code;
-
-    private String name;
-
-    private String unitOfMeasure;
-
+    private String productName;
+    private Integer quantity;
 
 }

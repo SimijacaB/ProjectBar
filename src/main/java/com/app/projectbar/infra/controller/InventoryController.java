@@ -1,8 +1,8 @@
 package com.app.projectbar.infra.controller;
 
 import com.app.projectbar.application.IInventoryService;
-import com.app.projectbar.domain.dto.InventoryDTO;
-import com.app.projectbar.domain.dto.InventoryResponseDTO;
+import com.app.projectbar.domain.dto.inventory.InventoryDTO;
+import com.app.projectbar.domain.dto.inventory.InventoryResponseDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

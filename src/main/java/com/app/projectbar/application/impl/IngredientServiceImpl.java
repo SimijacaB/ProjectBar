@@ -2,8 +2,8 @@ package com.app.projectbar.application.impl;
 
 import com.app.projectbar.application.IIngredientService;
 import com.app.projectbar.domain.Ingredient;
-import com.app.projectbar.domain.dto.IngredientRequestDTO;
-import com.app.projectbar.domain.dto.IngredientResponseDTO;
+import com.app.projectbar.domain.dto.ingredient.IngredientRequestDTO;
+import com.app.projectbar.domain.dto.ingredient.IngredientResponseDTO;
 import com.app.projectbar.infra.repositories.IIngredientRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;

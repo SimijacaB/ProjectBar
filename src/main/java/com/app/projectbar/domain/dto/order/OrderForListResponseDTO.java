@@ -1,4 +1,4 @@
-package com.app.projectbar.domain.dto;
+package com.app.projectbar.domain.dto.order;
 
 
 import com.app.projectbar.domain.OrderItem;

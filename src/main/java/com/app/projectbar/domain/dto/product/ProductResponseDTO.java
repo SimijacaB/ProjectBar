@@ -1,6 +1,6 @@
-package com.app.projectbar.domain.dto;
+package com.app.projectbar.domain.dto.product;
 
-import com.app.projectbar.domain.Category;
+import com.app.projectbar.domain.dto.productIngredient.ProductIngredientResponseDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

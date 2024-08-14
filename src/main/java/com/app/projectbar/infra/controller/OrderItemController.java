@@ -1,10 +1,8 @@
 package com.app.projectbar.infra.controller;
 
 import com.app.projectbar.application.IOrderItemService;
-import com.app.projectbar.domain.dto.OrderItemRequestDTO;
-import com.app.projectbar.domain.dto.OrderItemResponseDTO;
-import com.app.projectbar.domain.dto.OrderRequestDTO;
-import com.app.projectbar.domain.dto.OrderResponseDTO;
+import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
+import com.app.projectbar.domain.dto.orderItem.OrderItemResponseDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

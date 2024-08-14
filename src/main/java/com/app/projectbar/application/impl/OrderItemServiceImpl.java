@@ -2,8 +2,8 @@ package com.app.projectbar.application.impl;
 
 import com.app.projectbar.application.IOrderItemService;
 import com.app.projectbar.domain.OrderItem;
-import com.app.projectbar.domain.dto.OrderItemRequestDTO;
-import com.app.projectbar.domain.dto.OrderItemResponseDTO;
+import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
+import com.app.projectbar.domain.dto.orderItem.OrderItemResponseDTO;
 import com.app.projectbar.infra.repositories.IOrderItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;

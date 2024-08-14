@@ -1,4 +1,4 @@
-package com.app.projectbar.domain.dto;
+package com.app.projectbar.domain.dto.orderItem;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

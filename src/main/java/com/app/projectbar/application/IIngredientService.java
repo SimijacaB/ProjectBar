@@ -1,7 +1,7 @@
 package com.app.projectbar.application;
 
-import com.app.projectbar.domain.dto.IngredientRequestDTO;
-import com.app.projectbar.domain.dto.IngredientResponseDTO;
+import com.app.projectbar.domain.dto.ingredient.IngredientRequestDTO;
+import com.app.projectbar.domain.dto.ingredient.IngredientResponseDTO;
 
 import java.util.List;
 

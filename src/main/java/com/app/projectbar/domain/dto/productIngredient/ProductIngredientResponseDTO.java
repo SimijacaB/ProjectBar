@@ -1,4 +1,4 @@
-package com.app.projectbar.domain.dto;
+package com.app.projectbar.domain.dto.productIngredient;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

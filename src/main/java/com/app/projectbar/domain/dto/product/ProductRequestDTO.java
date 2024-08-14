@@ -1,6 +1,7 @@
-package com.app.projectbar.domain.dto;
+package com.app.projectbar.domain.dto.product;
 
 import com.app.projectbar.domain.Category;
+import com.app.projectbar.domain.dto.productIngredient.ProductIngredientRequestDTO;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.*;
