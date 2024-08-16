@@ -50,6 +50,7 @@ public class JwtService {
     public String generateToken(UserDetails userDetails) {
         //El método no genera el token directamente, sino que delega esta tarea a otro método sobrecargado de generateToken que
         // acepta dos parámetros: un mapa de claims adicionales y el objeto UserDetails.
+        System.out.println("prueba desde jwtService");
         return generateToken(new HashMap<>(), userDetails);
     }
 
@@ -109,7 +110,6 @@ public class JwtService {
     /*
     Este método tiene como objetivo extraer la fecha de expiración (exp) de un token JWT, que es un Date representando el momento en que el token deja de ser válido.
      */
-
     private Date extractExpiration(String token) {
         //Llama al método extractClaim, definido dentro de esta clase.
         return extractClaim(token, Claims::getExpiration);//Claims::getExpiration: Esta es una referencia a un método que pertenece a la clase Claims de la biblioteca io.jsonwebtoken.

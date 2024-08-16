@@ -1,5 +1,6 @@
 package com.app.projectbar.configsSecurity;
 
+import com.app.projectbar.domain.UserDetailsForSecurity;
 import com.app.projectbar.infra.repositories.IUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -8,7 +9,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,7 +22,9 @@ public class ApplicationConfiguration {
     //UserDetailsService es una interfaz de Spring Security que define un solo método, loadUserByUsername(String username)
         // Este método se utiliza para cargar los detalles del usuario (como el nombre de usuario, contraseña, roles, etc.) desde una fuente de datos.
     UserDetailsService userDetailsService() {
-        return username -> (UserDetails) userRepository.findByEmail(username)//Esta es una expresión lambda que implementa el método loadUserByUsername de UserDetailsService.
+        System.out.println("prueba desde ApplicationConfiguration");
+        return username ->  userRepository.findByEmail(username)//Esta es una expresión lambda que
+                // implementa el método loadUserByUsername de UserDetailsService.
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
