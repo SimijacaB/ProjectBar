@@ -8,6 +8,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
@@ -15,8 +16,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-@Component
+@Service
 public class JwtService {
+
+    public JwtService() {
+        System.out.println("JwtService construido");
+    }
 
     @Value("${security.jwt.secret-key}")
     private String secretKey;
@@ -32,12 +37,17 @@ public class JwtService {
    como el nombre de usuario, roles, y otras propiedades.
     */
     public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+        //return extractClaim(token, Claims::getSubject);
+
+        String username = extractClaim(token, Claims::getSubject);
+        System.out.println("Extraído username: " + username);
+        return username;
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         //Este método, que se llama internamente dentro de extractClaim, probablemente toma el token JWT, lo decodifica y extrae todos los claims como un objeto Claims. (Método definido dentro de esta misma clase)
         final Claims claims = extractAllClaims(token);
+        System.out.println("Claims extraídos: " + claims);
         //Claims es una interfaz de io.jsonwebtoken que representa todos los claims contenidos en un token JWT.
         return claimsResolver.apply(claims);
         //Una vez que tienes el objeto Claims, la función claimsResolver se aplica a ese objeto para extraer un claim específico.
@@ -50,6 +60,7 @@ public class JwtService {
     public String generateToken(UserDetails userDetails) {
         //El método no genera el token directamente, sino que delega esta tarea a otro método sobrecargado de generateToken que
         // acepta dos parámetros: un mapa de claims adicionales y el objeto UserDetails.
+        System.out.println("Generando token para: " + userDetails.getUsername());
         System.out.println("prueba desde jwtService");
         return generateToken(new HashMap<>(), userDetails);
     }
@@ -70,6 +81,9 @@ public class JwtService {
             UserDetails userDetails,
             long expiration
     ) {
+        System.out.println("Construyendo token con claims: " + extraClaims);
+        System.out.println("Detalles del usuario: " + userDetails);
+        System.out.println("Fecha de expiración: " + new Date(System.currentTimeMillis() + expiration));
         return Jwts
                 .builder()
                 /*
@@ -93,9 +107,15 @@ public class JwtService {
 
     //isTokenValid: se utiliza para validar si un token JWT (JSON Web Token) es válido para un usuario específico. Es llamado en la Clase Filter
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);//Este método extrae el nombre de usuario (username) del token JWT.
-        //equals: Compara el nombre de usuario extraído del token con el nombre de usuario almacenado en el objeto UserDetails.
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);//Llama a otro método isTokenExpired(token) que verifica si el token JWT ha expirado (definido dentro de esta misma clase).
+//        final String username = extractUsername(token);//Este método extrae el nombre de usuario (username) del token JWT.
+//        //equals: Compara el nombre de usuario extraído del token con el nombre de usuario almacenado en el objeto UserDetails.
+//
+//        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);//Llama a otro método isTokenExpired(token) que verifica si el token JWT ha expirado (definido dentro de esta misma clase).
+//
+        final String username = extractUsername(token);
+        boolean isValid = (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        System.out.println("Token válido: " + isValid + ", Username: " + username);
+        return isValid;
     }
 
     /*
@@ -104,15 +124,23 @@ public class JwtService {
     (extractExpiration: método definido dentro de esta misma clase).
      */
     private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        Date expirationDate = extractExpiration(token);
+        boolean expired = expirationDate.before(new Date());
+        System.out.println("Fecha de expiración: " + expirationDate + ", Expirado: " + expired);
+        return expired;
+        //return extractExpiration(token).before(new Date());
     }
 
     /*
     Este método tiene como objetivo extraer la fecha de expiración (exp) de un token JWT, que es un Date representando el momento en que el token deja de ser válido.
      */
     private Date extractExpiration(String token) {
+        Date expirationDate = extractClaim(token, Claims::getExpiration);
+        System.out.println("Fecha de expiración extraída: " + expirationDate);
+        return expirationDate;
         //Llama al método extractClaim, definido dentro de esta clase.
-        return extractClaim(token, Claims::getExpiration);//Claims::getExpiration: Esta es una referencia a un método que pertenece a la clase Claims de la biblioteca io.jsonwebtoken.
+        //return extractClaim(token, Claims::getExpiration);//Claims::getExpiration: Esta es una referencia a un
+        // método que pertenece a la clase Claims de la biblioteca io.jsonwebtoken.
                                                                                     // El método getExpiration devuelve la fecha de expiración del token.
     }
 
@@ -120,12 +148,20 @@ public class JwtService {
     Se encarga de extraer todos los claims (reclamaciones) de un token JWT.
      */
     private Claims extractAllClaims(String token) {
-        return Jwts
-                .parserBuilder() //Crea un nuevo objeto JwtParserBuilder, que es utilizado para construir un objeto JwtParser.
-                .setSigningKey(getSignInKey())//Establece la clave secreta (signing key) que se usará para verificar la firma del token JWT. (Recibe como argumento la Key del método definido en esta misma clase)
-                .build()// Construye un objeto JwtParser utilizando la configuración establecida (incluyendo la clave de firma).
-                .parseClaimsJws(token)//Decodifica el token JWT proporcionado como parámetro. Este método verifica la firma del token utilizando la clave proporcionada y decodifica su contenido.
-                .getBody();//Extrae el cuerpo del token JWT, que contiene los claims.
+//        return Jwts
+//                .parserBuilder() //Crea un nuevo objeto JwtParserBuilder, que es utilizado para construir un objeto JwtParser.
+//                .setSigningKey(getSignInKey())//Establece la clave secreta (signing key) que se usará para verificar la firma del token JWT. (Recibe como argumento la Key del método definido en esta misma clase)
+//                .build()// Construye un objeto JwtParser utilizando la configuración establecida (incluyendo la clave de firma).
+//                .parseClaimsJws(token)//Decodifica el token JWT proporcionado como parámetro. Este método verifica la firma del token utilizando la clave proporcionada y decodifica su contenido.
+//                .getBody();//Extrae el cuerpo del token JWT, que contiene los claims.
+        Claims claims = Jwts
+                .parserBuilder()
+                .setSigningKey(getSignInKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        System.out.println("Claims extraídos del token: " + claims);
+        return claims;
     }
 
     /*
@@ -133,8 +169,12 @@ public class JwtService {
     Esta clave es utilizada para firmar y verificar tokens JWT en la aplicación.
      */
     private Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);//Decodifica la cadena secretKey (previamente definida en la clase) desde Base64 a un arreglo de bytes (byte[]).
-        return Keys.hmacShaKeyFor(keyBytes);//Crea una clave HMAC-SHA (HMAC con SHA-256) utilizando el arreglo de bytes decodificado.
+//        byte[] keyBytes = Decoders.BASE64.decode(secretKey);//Decodifica la cadena secretKey (previamente definida en la clase) desde Base64 a un arreglo de bytes (byte[]).
+//        return Keys.hmacShaKeyFor(keyBytes);//Crea una clave HMAC-SHA (HMAC con SHA-256) utilizando el arreglo de bytes decodificado.
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+        Key key = Keys.hmacShaKeyFor(keyBytes);
+        System.out.println("Clave de firma generada: " + key);
+        return key;
     }
 
 }
