@@ -29,7 +29,6 @@ public class AuthenticationService {
     }
 
     public User signup(RegisterUserDto input){
-        System.out.println("prueba desde service");
         User user = User.builder()
                 .fullName(input.getFullName())
                 .email(input.getEmail())
@@ -39,10 +38,11 @@ public class AuthenticationService {
     }
 
     public User authenticate(LoginUserDto input){
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         input.getEmail(),
-                        input.getEmail()
+                        input.getPassword()
                 )
         );
         return userRepository.findByEmail(input.getEmail())

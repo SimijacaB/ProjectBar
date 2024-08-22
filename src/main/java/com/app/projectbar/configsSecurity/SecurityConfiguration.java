@@ -29,7 +29,6 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
-        System.out.println("Prueba desde el SecurityFilterChain de SecurityConfiguration Inicio");
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests ->
@@ -42,14 +41,12 @@ public class SecurityConfiguration {
                 )
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        System.out.println("Prueba desde el SecurityFilterChain de SecurityConfiguration Final");
         return http.build();
 
     }
 
     @Bean
     CorsConfigurationSource corsConfigurationSource(){
-        System.out.println("Configurando CORS Inicio");
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:8090"));
         configuration.setAllowedMethods(List.of("GET", "POST"));
@@ -60,7 +57,6 @@ public class SecurityConfiguration {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", configuration);
-        System.out.println("Configurando CORS Final");
         return source;
     }
 

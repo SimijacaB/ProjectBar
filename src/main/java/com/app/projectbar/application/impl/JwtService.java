@@ -40,14 +40,12 @@ public class JwtService {
         //return extractClaim(token, Claims::getSubject);
 
         String username = extractClaim(token, Claims::getSubject);
-        System.out.println("Extraído username: " + username);
         return username;
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         //Este método, que se llama internamente dentro de extractClaim, probablemente toma el token JWT, lo decodifica y extrae todos los claims como un objeto Claims. (Método definido dentro de esta misma clase)
         final Claims claims = extractAllClaims(token);
-        System.out.println("Claims extraídos: " + claims);
         //Claims es una interfaz de io.jsonwebtoken que representa todos los claims contenidos en un token JWT.
         return claimsResolver.apply(claims);
         //Una vez que tienes el objeto Claims, la función claimsResolver se aplica a ese objeto para extraer un claim específico.
@@ -60,8 +58,6 @@ public class JwtService {
     public String generateToken(UserDetails userDetails) {
         //El método no genera el token directamente, sino que delega esta tarea a otro método sobrecargado de generateToken que
         // acepta dos parámetros: un mapa de claims adicionales y el objeto UserDetails.
-        System.out.println("Generando token para: " + userDetails.getUsername());
-        System.out.println("prueba desde jwtService");
         return generateToken(new HashMap<>(), userDetails);
     }
 
@@ -81,9 +77,7 @@ public class JwtService {
             UserDetails userDetails,
             long expiration
     ) {
-        System.out.println("Construyendo token con claims: " + extraClaims);
-        System.out.println("Detalles del usuario: " + userDetails);
-        System.out.println("Fecha de expiración: " + new Date(System.currentTimeMillis() + expiration));
+
         return Jwts
                 .builder()
                 /*
@@ -114,7 +108,6 @@ public class JwtService {
 //
         final String username = extractUsername(token);
         boolean isValid = (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
-        System.out.println("Token válido: " + isValid + ", Username: " + username);
         return isValid;
     }
 
@@ -126,7 +119,6 @@ public class JwtService {
     private boolean isTokenExpired(String token) {
         Date expirationDate = extractExpiration(token);
         boolean expired = expirationDate.before(new Date());
-        System.out.println("Fecha de expiración: " + expirationDate + ", Expirado: " + expired);
         return expired;
         //return extractExpiration(token).before(new Date());
     }
@@ -136,7 +128,6 @@ public class JwtService {
      */
     private Date extractExpiration(String token) {
         Date expirationDate = extractClaim(token, Claims::getExpiration);
-        System.out.println("Fecha de expiración extraída: " + expirationDate);
         return expirationDate;
         //Llama al método extractClaim, definido dentro de esta clase.
         //return extractClaim(token, Claims::getExpiration);//Claims::getExpiration: Esta es una referencia a un
@@ -160,7 +151,6 @@ public class JwtService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-        System.out.println("Claims extraídos del token: " + claims);
         return claims;
     }
 
@@ -173,7 +163,6 @@ public class JwtService {
 //        return Keys.hmacShaKeyFor(keyBytes);//Crea una clave HMAC-SHA (HMAC con SHA-256) utilizando el arreglo de bytes decodificado.
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         Key key = Keys.hmacShaKeyFor(keyBytes);
-        System.out.println("Clave de firma generada: " + key);
         return key;
     }
 

@@ -38,7 +38,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.handlerExceptionResolver = handlerExceptionResolver;
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
-        System.out.println("JwtService inyectado correctamente: " + jwtService);
     }
 
     @Override
@@ -47,11 +46,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
              @NonNull HttpServletResponse response,
              @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        System.out.println("Ejecutando JwtAuthenticationFilter");
         final String authHeader = request.getHeader("Authorization");
-        System.out.println("Valor de authHeader antes del if:" + authHeader);
         if( authHeader == null || !authHeader.startsWith("Bearer ")){
-            System.out.println("Valor de authHeader después del if:" + authHeader);
             filterChain.doFilter(request, response);
             return;
         }
@@ -75,6 +71,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }catch (Exception exception){
             handlerExceptionResolver.resolveException(request, response, null, exception);
         }
-        System.out.println("Finalizando JwtAuthenticationFilter");
     }
 }
