@@ -1,6 +1,7 @@
 package com.app.projectbar.domain;
 
 
+import com.app.projectbar.domain.enums.UnitOfMeasure;
 import jakarta.persistence.*;
 import lombok.*;
 

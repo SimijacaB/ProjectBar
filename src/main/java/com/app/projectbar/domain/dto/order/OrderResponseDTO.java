@@ -2,14 +2,11 @@ package com.app.projectbar.domain.dto.order;
 
 
 import com.app.projectbar.domain.OrderItem;
-import com.app.projectbar.domain.OrderStatus;
-import com.app.projectbar.domain.Status;
-import jakarta.persistence.*;
+import com.app.projectbar.domain.enums.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.util.List;

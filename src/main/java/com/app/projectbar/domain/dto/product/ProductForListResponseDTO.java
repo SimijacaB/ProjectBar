@@ -1,6 +1,6 @@
 package com.app.projectbar.domain.dto.product;
 
-import com.app.projectbar.domain.Category;
+import com.app.projectbar.domain.enums.Category;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

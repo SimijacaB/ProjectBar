@@ -1,6 +1,6 @@
-package com.app.projectbar.application.impl;
+package com.app.projectbar.application.implementation;
 
-import com.app.projectbar.application.IInventoryService;
+import com.app.projectbar.application.interfaces.IInventoryService;
 import com.app.projectbar.domain.Ingredient;
 import com.app.projectbar.domain.Inventory;
 import com.app.projectbar.domain.Product;

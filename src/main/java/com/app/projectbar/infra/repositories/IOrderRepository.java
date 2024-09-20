@@ -2,7 +2,7 @@ package com.app.projectbar.infra.repositories;
 
 
 import com.app.projectbar.domain.Order;
-import com.app.projectbar.domain.OrderStatus;
+import com.app.projectbar.domain.enums.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

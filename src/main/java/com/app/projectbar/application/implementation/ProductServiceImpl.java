@@ -1,6 +1,6 @@
-package com.app.projectbar.application.impl;
+package com.app.projectbar.application.implementation;
 
-import com.app.projectbar.application.IProductService;
+import com.app.projectbar.application.interfaces.IProductService;
 import com.app.projectbar.domain.Ingredient;
 import com.app.projectbar.domain.ProductIngredient;
 import com.app.projectbar.domain.dto.product.ProductForListResponseDTO;
@@ -8,7 +8,7 @@ import com.app.projectbar.domain.dto.product.ProductRequestDTO;
 import com.app.projectbar.domain.dto.product.ProductResponseDTO;
 import com.app.projectbar.domain.dto.product.UpdateProductRequestDTO;
 import com.app.projectbar.infra.repositories.IProductIngredientRepository;
-import com.app.projectbar.domain.Category;
+import com.app.projectbar.domain.enums.Category;
 import com.app.projectbar.domain.Product;
 import com.app.projectbar.infra.repositories.IProductRepository;
 import com.app.projectbar.infra.repositories.IIngredientRepository;

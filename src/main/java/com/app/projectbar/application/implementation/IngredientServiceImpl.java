@@ -1,6 +1,6 @@
-package com.app.projectbar.application.impl;
+package com.app.projectbar.application.implementation;
 
-import com.app.projectbar.application.IIngredientService;
+import com.app.projectbar.application.interfaces.IIngredientService;
 import com.app.projectbar.domain.Ingredient;
 import com.app.projectbar.domain.dto.ingredient.IngredientRequestDTO;
 import com.app.projectbar.domain.dto.ingredient.IngredientResponseDTO;

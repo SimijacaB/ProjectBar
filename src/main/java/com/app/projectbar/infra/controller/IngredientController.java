@@ -1,6 +1,6 @@
 package com.app.projectbar.infra.controller;
 
-import com.app.projectbar.application.IIngredientService;
+import com.app.projectbar.application.interfaces.IIngredientService;
 import com.app.projectbar.domain.dto.ingredient.IngredientRequestDTO;
 import com.app.projectbar.domain.dto.ingredient.IngredientResponseDTO;
 import jakarta.validation.Valid;

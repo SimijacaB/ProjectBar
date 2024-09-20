@@ -1,7 +1,7 @@
 package com.app.projectbar.infra.controller;
 
-import com.app.projectbar.application.IProductService;
-import com.app.projectbar.domain.Category;
+import com.app.projectbar.application.interfaces.IProductService;
+import com.app.projectbar.domain.enums.Category;
 import com.app.projectbar.domain.dto.product.ProductForListResponseDTO;
 import com.app.projectbar.domain.dto.product.ProductRequestDTO;
 import com.app.projectbar.domain.dto.product.ProductResponseDTO;

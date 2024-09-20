@@ -1,6 +1,6 @@
 package com.app.projectbar.infra.controller;
 
-import com.app.projectbar.application.IOrderService;
+import com.app.projectbar.application.interfaces.IOrderService;
 import com.app.projectbar.domain.dto.order.OrderForListResponseDTO;
 import com.app.projectbar.domain.dto.order.OrderRequestDTO;
 import com.app.projectbar.domain.dto.order.OrderResponseDTO;

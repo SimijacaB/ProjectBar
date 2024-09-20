@@ -1,6 +1,6 @@
 package com.app.projectbar.infra.controller;
 
-import com.app.projectbar.application.IOrderItemService;
+import com.app.projectbar.application.interfaces.IOrderItemService;
 import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
 import com.app.projectbar.domain.dto.orderItem.OrderItemResponseDTO;
 import jakarta.validation.Valid;

@@ -1,7 +1,7 @@
-package com.app.projectbar.application;
+package com.app.projectbar.application.interfaces;
 
 
-import com.app.projectbar.domain.OrderStatus;
+import com.app.projectbar.domain.enums.OrderStatus;
 import com.app.projectbar.domain.dto.order.OrderForListResponseDTO;
 import com.app.projectbar.domain.dto.order.OrderRequestDTO;
 import com.app.projectbar.domain.dto.order.OrderResponseDTO;

@@ -1,4 +1,4 @@
-package com.app.projectbar.domain;
+package com.app.projectbar.domain.enums;
 
 public enum Status {
 

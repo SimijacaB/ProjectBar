@@ -1,4 +1,4 @@
-package com.app.projectbar.application;
+package com.app.projectbar.application.interfaces;
 
 import com.app.projectbar.domain.dto.inventory.InventoryDTO;
 import com.app.projectbar.domain.dto.inventory.InventoryResponseDTO;

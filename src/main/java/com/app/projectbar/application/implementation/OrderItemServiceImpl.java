@@ -1,6 +1,6 @@
-package com.app.projectbar.application.impl;
+package com.app.projectbar.application.implementation;
 
-import com.app.projectbar.application.IOrderItemService;
+import com.app.projectbar.application.interfaces.IOrderItemService;
 import com.app.projectbar.domain.OrderItem;
 import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
 import com.app.projectbar.domain.dto.orderItem.OrderItemResponseDTO;

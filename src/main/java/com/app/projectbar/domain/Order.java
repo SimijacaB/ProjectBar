@@ -1,5 +1,6 @@
 package com.app.projectbar.domain;
 
+import com.app.projectbar.domain.enums.OrderStatus;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
