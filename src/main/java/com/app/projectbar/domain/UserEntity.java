@@ -39,4 +39,7 @@ public class UserEntity {
     @Column(name = "role")
     private Set<RoleEnum> roles;
 
+
+
+
 }

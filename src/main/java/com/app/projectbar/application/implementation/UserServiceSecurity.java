@@ -55,7 +55,7 @@ public class UserServiceSecurity implements UserDetailsService {
 
     private List<Permission> getPermissions(RoleEnum role) {
         if (role == RoleEnum.ADMIN || role == RoleEnum.WAITER) {
-            return List.of(Permission.READ);
+            return List.of(Permission.READ, Permission.WRITE);
         }
         return List.of();
     }
