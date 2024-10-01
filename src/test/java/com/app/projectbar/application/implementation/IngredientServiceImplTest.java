@@ -60,16 +60,22 @@ class IngredientServiceImplTest {
         //Given
         Long id = 1L;
         Ingredient ingredient = new Ingredient(1L, "G01-ML-0001I", "Ginebra", UnitOfMeasure.ML, null);
+        IngredientResponseDTO ingredientResponseDTO = new IngredientResponseDTO();
+        ingredientResponseDTO.setId(1L);
+        ingredientResponseDTO.setCode("G01-ML-0001I");
+        ingredientResponseDTO.setName("Ginebra");
+        ingredientResponseDTO.setUnitOfMeasure("ML");
 
         when(this.ingredientRepository.findById( anyLong() )).thenReturn(Optional.of(ingredient));
+        when(modelMapper.map(ingredient, IngredientResponseDTO.class)).thenReturn(ingredientResponseDTO);
 
         //When
-        Ingredient result = modelMapper.map(ingredientService.findById(1L), Ingredient.class);
+        IngredientResponseDTO result = ingredientService.findById(id);
         
         //Then
         Assertions.assertEquals("Ginebra", result.getName());
         Assertions.assertEquals("G01-ML-0001I", result.getCode());
-        Assertions.assertEquals(UnitOfMeasure.ML, result.getUnitOfMeasure());
+        Assertions.assertEquals(UnitOfMeasure.ML.toString(), result.getUnitOfMeasure());
     }
 
 
