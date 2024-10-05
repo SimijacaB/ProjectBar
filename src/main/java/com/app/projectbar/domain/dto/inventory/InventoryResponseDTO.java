@@ -18,7 +18,6 @@ public class InventoryResponseDTO {
 
     private String code;
 
-
     private Integer quantity;
 
 

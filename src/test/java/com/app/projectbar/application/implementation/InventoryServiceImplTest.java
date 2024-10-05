@@ -1,7 +1,10 @@
 package com.app.projectbar.application.implementation;
 
 import com.app.projectbar.domain.Ingredient;
+import com.app.projectbar.domain.Inventory;
 import com.app.projectbar.domain.Product;
+import com.app.projectbar.domain.dto.inventory.InventoryDTO;
+import com.app.projectbar.domain.dto.inventory.InventoryResponseDTO;
 import com.app.projectbar.infra.repositories.IIngredientRepository;
 import com.app.projectbar.infra.repositories.IInventoryRepository;
 import com.app.projectbar.infra.repositories.IProductRepository;
@@ -30,6 +33,10 @@ class InventoryServiceImplTest {
     @InjectMocks
     private InventoryServiceImpl inventoryService;
 
+    private InventoryDTO inventoryDTO;
+    private Inventory inventory;
+    private InventoryResponseDTO responseDTO;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -37,7 +44,7 @@ class InventoryServiceImplTest {
     }
 
     @Test
-    void save() {
+    void save_ShouldReturnSavedInventory() {
         Ingredient ingredient = new Ingredient();
 
 
