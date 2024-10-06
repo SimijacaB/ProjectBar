@@ -34,23 +34,38 @@ public class InventoryServiceImpl implements IInventoryService {
         }
         Inventory inventory = inventoryRepository.save(modelMapper.map(inventoryRequest, Inventory.class));
         InventoryResponseDTO response = modelMapper.map(inventory, InventoryResponseDTO.class);
-        response.setName(product.get().getName());
+        product.ifPresent(p -> {
+            response.setCode(p.getCode());
+            response.setName(p.getName());
+        });
+
+
+        ingredient.ifPresent(i -> {
+            if (response.getCode() == null) {  // Si no se ha asignado código aún
+                response.setCode(i.getCode());
+            }
+            if (response.getName() == null) {  // Si no se ha asignado nombre aún
+                response.setName(i.getName());
+            }
+        });
         return response;
 
     }
 
     @Override
     public InventoryResponseDTO addStock(Integer quantityToAdd, String code) {
-        Optional<Inventory> inventory = inventoryRepository.findByCode(code);
-        Optional<Product> product = productRepository.findByCode(code);
-        if(inventory.isEmpty()){
+        Optional<Inventory> inventoryOptional = inventoryRepository.findByCode(code);
+        Optional<Product> productOptional = productRepository.findByCode(code);
+        if(inventoryOptional.isEmpty()){
             throw new RuntimeException("Inventory not found by code " + code);
         }
-        Inventory inventory1 = inventory.get();
-        inventory1.setQuantity(inventory1.getQuantity() + quantityToAdd);
+        Inventory inventory = inventoryOptional.get();
+        inventory.setQuantity(inventory.getQuantity() + quantityToAdd);
+
+        inventoryRepository.save(inventory);
 
         InventoryResponseDTO response = modelMapper.map(inventory, InventoryResponseDTO.class);
-        response.setName(product.get().getName());
+        productOptional.ifPresent(p -> response.setName(p.getName()));
         return response;
     }
 
