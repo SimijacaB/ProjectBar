@@ -1,7 +1,5 @@
 package com.app.projectbar.domain.dto.inventory;
 
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
