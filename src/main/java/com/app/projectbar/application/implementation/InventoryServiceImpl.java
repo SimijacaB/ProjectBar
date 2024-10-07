@@ -34,6 +34,7 @@ public class InventoryServiceImpl implements IInventoryService {
         }
         Inventory inventory = inventoryRepository.save(modelMapper.map(inventoryRequest, Inventory.class));
         InventoryResponseDTO response = modelMapper.map(inventory, InventoryResponseDTO.class);
+
         product.ifPresent(p -> {
             response.setCode(p.getCode());
             response.setName(p.getName());
@@ -56,6 +57,7 @@ public class InventoryServiceImpl implements IInventoryService {
     public InventoryResponseDTO addStock(Integer quantityToAdd, String code) {
         Optional<Inventory> inventoryOptional = inventoryRepository.findByCode(code);
         Optional<Product> productOptional = productRepository.findByCode(code);
+        Optional<Ingredient> ingredientOptional = ingredientRepository.findByCode(code);
         if(inventoryOptional.isEmpty()){
             throw new RuntimeException("Inventory not found by code " + code);
         }
@@ -66,23 +68,29 @@ public class InventoryServiceImpl implements IInventoryService {
 
         InventoryResponseDTO response = modelMapper.map(inventory, InventoryResponseDTO.class);
         productOptional.ifPresent(p -> response.setName(p.getName()));
+        ingredientOptional.ifPresent(i -> response.setName(i.getName()));
         return response;
     }
 
     @Override
     public InventoryResponseDTO deductStock(Integer quantity, String code) {
-        Optional<Inventory> inventory = inventoryRepository.findByCode(code);
-        Optional<Product> product = productRepository.findByCode(code);
-        if(inventory.isEmpty()){
+        Optional<Inventory> inventoryOptional = inventoryRepository.findByCode(code);
+        Optional<Product> productOptional = productRepository.findByCode(code);
+        Optional<Ingredient> ingredientOptional = ingredientRepository.findByCode(code);
+        if(inventoryOptional.isEmpty()){
             throw new RuntimeException("Inventory not found by code " + code);
         }
 
-        Inventory inventory1 = inventory.get();
+        Inventory inventory1 = inventoryOptional.get();
         if(inventory1.getQuantity() < quantity){
             throw new RuntimeException("There is not enough inventory to discount");
         }
+        Inventory inventory = inventoryOptional.get();
+        inventory.setQuantity(inventory.getQuantity() - quantity);
+
         InventoryResponseDTO response = modelMapper.map(inventory, InventoryResponseDTO.class);
-        response.setName(product.get().getName());
+        productOptional.ifPresent(p -> response.setName(p.getName()));
+        ingredientOptional.ifPresent(i -> response.setName(i.getName()));
         return response;
     }
 
@@ -95,9 +103,9 @@ public class InventoryServiceImpl implements IInventoryService {
 
         for (InventoryResponseDTO inventory : response  ) {
             Optional<Product> product = productRepository.findByCode(inventory.getCode());
-            if (product.isPresent()){
-                inventory.setName(product.get().getName());
-            }
+            Optional<Ingredient> ingredient = ingredientRepository.findByCode(inventory.getCode());
+            product.ifPresent(p -> inventory.setName(p.getName()));
+            ingredient.ifPresent(i -> inventory.setName(i.getName()));
         }
         return response;
     }
@@ -106,17 +114,30 @@ public class InventoryServiceImpl implements IInventoryService {
     public InventoryResponseDTO findByCode(String code) {
         Optional<Inventory> inventory = inventoryRepository.findByCode(code);
         Optional<Product> product = productRepository.findByCode(code);
+        Optional<Ingredient> ingredient = ingredientRepository.findByCode(code);
         if(inventory.isEmpty()){
             throw new RuntimeException("Inventory not found by code " + code);
         }
 
         InventoryResponseDTO response = modelMapper.map(inventory.get(), InventoryResponseDTO.class);
-        response.setName(product.get().getName());
+        product.ifPresent(p -> response.setName(p.getName()));
+        ingredient.ifPresent(i -> response.setName(i.getName()));
         return response;
     }
 
+
+
     @Override
     public void deleteByCode(String code) {
+
+        Optional<Inventory> inventoryExisting = inventoryRepository.findByCode(code);
+
+        if(inventoryExisting.isEmpty()){
+            throw new RuntimeException("Inventory not found by code " + code);
+        }
+
         inventoryRepository.deleteByCode(code);
     }
+
+
 }
