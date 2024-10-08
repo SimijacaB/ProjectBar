@@ -35,7 +35,8 @@ class InventoryServiceImplTest {
     @InjectMocks
     private InventoryServiceImpl inventoryService;
 
-    private InventoryDTO inventoryDTOI;
+    private InventoryDTO inventoryRequest;
+    private String code1 = "G01-ML-0001I";
     private InventoryDTO inventoryDTOP;
     private Inventory inventoryI;
     private Inventory inventoryP;
@@ -44,37 +45,16 @@ class InventoryServiceImplTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-
+        inventoryRequest = new InventoryDTO();
+        inventoryRequest.setCode(code1);
     }
 
-     /*
-    {
-        "id": 1,
-        "code": "G01-ML-0001I",
-        "name": "Ginebra",
-        "unitOfMeasure": "ML"
-    },
-    {
-        "id": 2,
-        "code": "T01-ML-0002I",
-        "name": "Tonica",
-        "unitOfMeasure": "ML"
-    },
-    {
-        "id": 3,
-        "code": "L01-UN-0001I",
-        "name": "Unidad de Limon",
-        "unitOfMeasure": null
-    },
-     */
 
 
     // should return a kind of InventoryResponseDTO
     @Test
     void testSave() {
         //Given
-        InventoryDTO inventoryRequest = new InventoryDTO();
-        inventoryRequest.setCode("G01-ML-0001I");
 
         Ingredient ingredient = new Ingredient();
         ingredient.setName("Ginebra");
@@ -82,7 +62,7 @@ class InventoryServiceImplTest {
         Inventory inventory = new Inventory();
         inventory.setId(1L);
 
-        //Simular ingrediente que vamos aq enncontrar por código
+        //Simular ingrediente que vamos a enncontrar por código
         when(ingredientRepository.findByCode(inventoryRequest.getCode())).thenReturn(Optional.of(ingredient));
 
         // Simulamos el mapeo de InventoryDTO a Inventory
@@ -109,8 +89,7 @@ class InventoryServiceImplTest {
     @Test
     public void testSaveException(){
         //Given
-        InventoryDTO inventoryRequest = new InventoryDTO();
-        inventoryRequest.setCode("P01-UN-0001P");
+
         // Simulamos que no se encuentra ni producto ni ingrediente
         when(productRepository.findByCode(inventoryRequest.getCode())).thenReturn(Optional.empty());
         when(ingredientRepository.findByCode(inventoryRequest.getCode())).thenReturn(Optional.empty());
@@ -120,7 +99,7 @@ class InventoryServiceImplTest {
             inventoryService.save(inventoryRequest);
         });
 
-        assertEquals("Product not found by code P01-UN-0001P", exception.getMessage());
+        assertEquals("Product not found by code " + code1, exception.getMessage());
         verify(productRepository).findByCode(inventoryRequest.getCode());
         verify(ingredientRepository).findByCode(inventoryRequest.getCode());
         verify(inventoryRepository, never()).save(any(Inventory.class));
