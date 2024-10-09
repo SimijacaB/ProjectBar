@@ -37,7 +37,7 @@ public class Order {
     private String notes;
 
     @Enumerated(EnumType.STRING)
-    private OrderStatus status = OrderStatus.PENDING;
+    private OrderStatus status;
 
     @DateTimeFormat(pattern = "dd-MM-yyyy HH:mm:ss")
     private LocalDateTime date;
@@ -51,6 +51,7 @@ public class Order {
     protected void onCreate() {
         if (status == null) {
             status = OrderStatus.PENDING;
+            date = LocalDateTime.now();
         }
     }
 }

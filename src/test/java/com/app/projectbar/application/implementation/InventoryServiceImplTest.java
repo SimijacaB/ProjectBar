@@ -10,6 +10,7 @@ import com.app.projectbar.infra.repositories.IIngredientRepository;
 import com.app.projectbar.infra.repositories.IInventoryRepository;
 import com.app.projectbar.infra.repositories.IProductRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -36,23 +37,24 @@ class InventoryServiceImplTest {
     private InventoryServiceImpl inventoryService;
 
     private InventoryDTO inventoryRequest;
-    private String code1 = "G01-ML-0001I";
-    private InventoryDTO inventoryDTOP;
-    private Inventory inventoryI;
-    private Inventory inventoryP;
-    private InventoryResponseDTO responseDTO;
+    private static final String CODE_GINEBRA = "G01-ML-0001I";
+    private static final String CODE_PILSEN = "B01-UN-0001P";
+    private static final String CODE_AGUILA = "B01-UN-0002P";
+
+    private InventoryResponseDTO inventoryResponse;
+
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+
         inventoryRequest = new InventoryDTO();
-        inventoryRequest.setCode(code1);
+        inventoryRequest.setCode(CODE_GINEBRA);
     }
 
 
-
-    // should return a kind of InventoryResponseDTO
     @Test
+    @DisplayName("Test save method with valid ingredient")
     void testSave() {
         //Given
 
@@ -62,7 +64,7 @@ class InventoryServiceImplTest {
         Inventory inventory = new Inventory();
         inventory.setId(1L);
 
-        //Simular ingrediente que vamos a enncontrar por código
+        //Simular ingrediente que vamos a encontrar por código
         when(ingredientRepository.findByCode(inventoryRequest.getCode())).thenReturn(Optional.of(ingredient));
 
         // Simulamos el mapeo de InventoryDTO a Inventory
@@ -71,8 +73,8 @@ class InventoryServiceImplTest {
         // Simulamos el guardado de Inventory y el mapeo de InventoryResponseDTO
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(inventory);
 
-        InventoryResponseDTO inventoryResponse = new InventoryResponseDTO();
-        inventoryResponse.setCode("G01-ML-0001I");
+         inventoryResponse = new InventoryResponseDTO();
+        inventoryResponse.setCode(CODE_GINEBRA);
         inventoryResponse.setName("Ginebra");
         when(modelMapper.map(inventory, InventoryResponseDTO.class)).thenReturn(inventoryResponse);
 
@@ -82,8 +84,37 @@ class InventoryServiceImplTest {
         //then
         assertNotNull(result);
         assertEquals("Ginebra", result.getName());
-        assertEquals("G01-ML-0001I", result.getCode());
+        assertEquals(CODE_GINEBRA, result.getCode());
 
+    }
+    @Test
+    void testSaveAssignsIngredientNameIfProductNameNotPresent() {
+        // Given
+        InventoryDTO inventoryRequest = new InventoryDTO();
+        inventoryRequest.setCode(CODE_GINEBRA);
+
+        Product product = new Product();
+        product.setCode(CODE_GINEBRA);
+
+        Ingredient ingredient = new Ingredient();
+        ingredient.setCode(CODE_GINEBRA);
+        ingredient.setName("Ginebra");
+
+        Inventory inventory = new Inventory();
+        inventory.setId(1L);
+
+        when(productRepository.findByCode(CODE_GINEBRA)).thenReturn(Optional.of(product));
+        when(ingredientRepository.findByCode(CODE_GINEBRA)).thenReturn(Optional.of(ingredient));
+        when(modelMapper.map(inventoryRequest, Inventory.class)).thenReturn(inventory);
+        when(inventoryRepository.save(any(Inventory.class))).thenReturn(inventory);
+        when(modelMapper.map(inventory, InventoryResponseDTO.class)).thenReturn(new InventoryResponseDTO());
+
+        // When
+        InventoryResponseDTO result = inventoryService.save(inventoryRequest);
+
+        // Then
+        assertEquals(CODE_GINEBRA, result.getCode());
+        assertEquals("Ginebra", result.getName());
     }
 
     @Test
@@ -99,7 +130,7 @@ class InventoryServiceImplTest {
             inventoryService.save(inventoryRequest);
         });
 
-        assertEquals("Product not found by code " + code1, exception.getMessage());
+        assertEquals("Product not found by code " + CODE_GINEBRA, exception.getMessage());
         verify(productRepository).findByCode(inventoryRequest.getCode());
         verify(ingredientRepository).findByCode(inventoryRequest.getCode());
         verify(inventoryRepository, never()).save(any(Inventory.class));
@@ -108,12 +139,11 @@ class InventoryServiceImplTest {
     @Test
     void testAddStock() {
         // GIVEN
-        String code = "B01-UN-0001P";
         Integer quantityToAdd = 10;
 
         //Simular inventario existente
         Inventory existingInventory = new Inventory();
-        existingInventory.setCode(code);
+        existingInventory.setCode(CODE_PILSEN);
         existingInventory.setQuantity(5);
 
         //Simular el producto relacionado
@@ -121,17 +151,17 @@ class InventoryServiceImplTest {
         product.setName("Pilsen");
 
         //Objeto de respuesta simulado
-        InventoryResponseDTO responseDTO = new InventoryResponseDTO();
-        responseDTO.setQuantity(15);
-        responseDTO.setName("Pilsen");
+        inventoryResponse = new InventoryResponseDTO();
+        inventoryResponse.setQuantity(15);
+        inventoryResponse.setName("Pilsen");
 
         //Configurar los mocks
-        when(inventoryRepository.findByCode(code)).thenReturn(Optional.of(existingInventory));
-        when(productRepository.findByCode(code)).thenReturn(Optional.of(product));
-        when(modelMapper.map(existingInventory, InventoryResponseDTO.class)).thenReturn(responseDTO);
+        when(inventoryRepository.findByCode(CODE_PILSEN)).thenReturn(Optional.of(existingInventory));
+        when(productRepository.findByCode(CODE_PILSEN)).thenReturn(Optional.of(product));
+        when(modelMapper.map(existingInventory, InventoryResponseDTO.class)).thenReturn(inventoryResponse);
 
         //  WHEN
-        InventoryResponseDTO result = inventoryService.addStock(quantityToAdd, code);
+        InventoryResponseDTO result = inventoryService.addStock(quantityToAdd, CODE_PILSEN);
 
         //Then
         assertEquals(15, result.getQuantity());
@@ -142,28 +172,26 @@ class InventoryServiceImplTest {
     @Test
     public void testAddStockException(){
         // ---------  GIVEN -----------
-        String code = "P01-UN-0001P";
         Integer quantityToAdd = 15;
         //Simulamos que no encontramos un Inventory con este code
-        when(inventoryRepository.findByCode(code)).thenReturn(Optional.empty());
+        when(inventoryRepository.findByCode(CODE_PILSEN)).thenReturn(Optional.empty());
 
         //  ------- WHEN AND THEN ----------
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            inventoryService.addStock(quantityToAdd, code);
+            inventoryService.addStock(quantityToAdd, CODE_PILSEN);
         });
 
-        assertEquals("Inventory not found by code P01-UN-0001P", exception.getMessage());
+        assertEquals("Inventory not found by code " + CODE_PILSEN, exception.getMessage());
     }
 
     @Test
     void deductStock() {
         // GIVEN
-        String code = "B01-UN-0001P";
         Integer quantityToDeduct = 10;
 
         //Simular inventario existente
         Inventory existingInventory = new Inventory();
-        existingInventory.setCode(code);
+        existingInventory.setCode(CODE_PILSEN);
         existingInventory.setQuantity(20);
 
         //Simular el producto relacionado
@@ -171,17 +199,17 @@ class InventoryServiceImplTest {
         product.setName("Pilsen");
 
         //Objeto de respuesta simulado
-        InventoryResponseDTO responseDTO = new InventoryResponseDTO();
-        responseDTO.setQuantity(10);
-        responseDTO.setName("Pilsen");
+        inventoryResponse = new InventoryResponseDTO();
+        inventoryResponse.setQuantity(10);
+        inventoryResponse.setName("Pilsen");
 
         //Configurar los mocks
-        when(inventoryRepository.findByCode(code)).thenReturn(Optional.of(existingInventory));
-        when(productRepository.findByCode(code)).thenReturn(Optional.of(product));
-        when(modelMapper.map(existingInventory, InventoryResponseDTO.class)).thenReturn(responseDTO);
+        when(inventoryRepository.findByCode(CODE_PILSEN)).thenReturn(Optional.of(existingInventory));
+        when(productRepository.findByCode(CODE_PILSEN)).thenReturn(Optional.of(product));
+        when(modelMapper.map(existingInventory, InventoryResponseDTO.class)).thenReturn(inventoryResponse);
 
         //   ---- WHEN ------
-        InventoryResponseDTO result = inventoryService.deductStock(quantityToDeduct, code);
+        InventoryResponseDTO result = inventoryService.deductStock(quantityToDeduct, CODE_PILSEN);
 
         //  ----  THEN  -----
         assertEquals(10, result.getQuantity());
@@ -191,35 +219,33 @@ class InventoryServiceImplTest {
     @Test
     public void testDeductStockExceptionWhenNotFoundSomethingWithCode(){
         // ---------  GIVEN -----------
-        String code = "P01-UN-0001P";
         Integer quantityToDeduck = 15;
 
 
 
         //  ------- WHEN AND THEN ----------
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            inventoryService.deductStock(quantityToDeduck, code);
+            inventoryService.deductStock(quantityToDeduck, CODE_PILSEN);
         });
 
-        assertEquals("Inventory not found by code P01-UN-0001P", exception.getMessage());
+        assertEquals("Inventory not found by code " + CODE_PILSEN, exception.getMessage());
     }
 
     @Test
     public void testDeductStockExceptionWhenQuantityIsNotEnought() {
         // ---------  GIVEN -----------
-        String code = "P01-UN-0001P";
         Integer quantityToDeduct = 15;
 
         //Simular inventario existente
         Inventory existingInventory = new Inventory();
-        existingInventory.setCode(code);
+        existingInventory.setCode(CODE_PILSEN);
         existingInventory.setQuantity(10);
 
-        when(inventoryRepository.findByCode(code)).thenReturn(Optional.of(existingInventory));
+        when(inventoryRepository.findByCode(CODE_PILSEN)).thenReturn(Optional.of(existingInventory));
 
         //  ------- WHEN AND THEN ----------
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            inventoryService.deductStock(quantityToDeduct, code);
+            inventoryService.deductStock(quantityToDeduct, CODE_PILSEN);
         });
 
         assertEquals("There is not enough inventory to discount", exception.getMessage());
@@ -230,15 +256,15 @@ class InventoryServiceImplTest {
 
         //  ---- GIVEN -----
         Inventory inventory1 = new Inventory();
-        inventory1.setCode("G01-ML-0001I");
+        inventory1.setCode(CODE_GINEBRA);
         inventory1.setQuantity(1970);
 
         Inventory inventory2 = new Inventory();
-        inventory2.setCode("B01-UN-0001P");
+        inventory2.setCode(CODE_PILSEN);
         inventory2.setQuantity(50);
 
         Inventory inventory3 = new Inventory();
-        inventory3.setCode("B01-UN-0002P");
+        inventory3.setCode(CODE_AGUILA);
         inventory3.setQuantity(30);
 
         InventoryResponseDTO inventoryResponse1 = new InventoryResponseDTO("Ginebra", "G01-ML-0001I", 1970);
@@ -261,9 +287,9 @@ class InventoryServiceImplTest {
         assertEquals("Pilsen", result.get(1).getName());
         assertEquals("Aguila", result.get(2).getName());
 
-        assertEquals("B01-UN-0001P", result.get(1).getCode());
-        assertEquals("G01-ML-0001I", result.get(0).getCode());
-        assertEquals("B01-UN-0002P", result.get(2).getCode());
+        assertEquals(CODE_GINEBRA, result.get(0).getCode());
+        assertEquals(CODE_PILSEN, result.get(1).getCode());
+        assertEquals(CODE_AGUILA, result.get(2).getCode());
 
         assertEquals(1970, result.get(0).getQuantity());
         assertEquals(70, result.get(1).getQuantity());
@@ -274,24 +300,23 @@ class InventoryServiceImplTest {
     @Test
     void findByCode() {
         // ----- GIVEN -----
-        String code = "G01-ML-0001I";
         Inventory inventory1 = new Inventory();
-        inventory1.setCode("G01-ML-0001I");
+        inventory1.setCode(CODE_GINEBRA);
         inventory1.setQuantity(1970);
 
-        when(this.inventoryRepository.findByCode("G01-ML-0001I")).thenReturn(Optional.of(inventory1));
+        when(this.inventoryRepository.findByCode(CODE_GINEBRA)).thenReturn(Optional.of(inventory1));
 
-        InventoryResponseDTO inventoryResponse1 = new InventoryResponseDTO("Ginebra", "G01-ML-0001I", 1970);
+        inventoryResponse = new InventoryResponseDTO("Ginebra", CODE_GINEBRA, 1970);
 
-        when(modelMapper.map(inventory1, InventoryResponseDTO.class)).thenReturn(inventoryResponse1);
+        when(modelMapper.map(inventory1, InventoryResponseDTO.class)).thenReturn(inventoryResponse);
 
 
         //  ---- WHEN ------
-        InventoryResponseDTO result = inventoryService.findByCode(code);
+        InventoryResponseDTO result = inventoryService.findByCode(CODE_GINEBRA);
 
         // ------  THEN --------
         assertEquals("Ginebra", result.getName());
-        assertEquals("G01-ML-0001I", result.getCode());
+        assertEquals(CODE_GINEBRA, result.getCode());
         assertEquals(1970, result.getQuantity());
 
     }
@@ -300,32 +325,31 @@ class InventoryServiceImplTest {
     public void testFindByCodeWhenNotFound(){
 
         // ---------  GIVEN -----------
-        String code = "P01-UN-0001P";
+
 
         //  ------- WHEN AND THEN ----------
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            inventoryService.findByCode(code);
+            inventoryService.findByCode(CODE_PILSEN);
         });
 
-        assertEquals("Inventory not found by code " +code, exception.getMessage());
+        assertEquals("Inventory not found by code " +CODE_PILSEN, exception.getMessage());
 
     }
 
     @Test
     void deleteByCode() {
         // ---- GIVEN -------
-        String code = "P01-UN-0001P";
 
         Inventory inventory = new Inventory();
-        inventory.setCode(code);
+        inventory.setCode(CODE_PILSEN);
 
-        when(inventoryRepository.findByCode(code)).thenReturn(Optional.of(inventory));
+        when(inventoryRepository.findByCode(CODE_PILSEN)).thenReturn(Optional.of(inventory));
 
         // ----  WHEN -------
-        inventoryService.deleteByCode(code);
+        inventoryService.deleteByCode(CODE_PILSEN);
 
         // ---- THEN -------
-        verify(inventoryRepository).deleteByCode(code);
+        verify(inventoryRepository).deleteByCode(CODE_PILSEN);
 
 
     }
@@ -334,14 +358,13 @@ class InventoryServiceImplTest {
     public void testDeleteByCodeWhenNotFound(){
 
         // ---------  GIVEN -----------
-        String code = "P01-UN-0001P";
 
         //  ------- WHEN AND THEN ----------
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            inventoryService.deleteByCode(code);
+            inventoryService.deleteByCode(CODE_PILSEN);
         });
 
-        assertEquals("Inventory not found by code " + code, exception.getMessage());
+        assertEquals("Inventory not found by code " + CODE_PILSEN, exception.getMessage());
 
     }
 

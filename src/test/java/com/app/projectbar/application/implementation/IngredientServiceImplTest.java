@@ -23,14 +23,10 @@ import static org.mockito.Mockito.when;
 
 
 class IngredientServiceImplTest {
-
-
     @Mock
     private IIngredientRepository ingredientRepository;
-
     @Mock
     private ModelMapper modelMapper;
-
     @InjectMocks
     private IngredientServiceImpl ingredientService;
 
@@ -74,27 +70,6 @@ class IngredientServiceImplTest {
         when(modelMapper.map(ingredient2, IngredientResponseDTO.class)).thenReturn(ingredientResponseDTO2);
         when(modelMapper.map(ingredient3, IngredientResponseDTO.class)).thenReturn(ingredientResponseDTO3);
     }
-    /*
-    {
-        "id": 1,
-        "code": "G01-ML-0001I",
-        "name": "Ginebra",
-        "unitOfMeasure": "ML"
-    },
-    {
-        "id": 2,
-        "code": "T01-ML-0002I",
-        "name": "Tonica",
-        "unitOfMeasure": "ML"
-    },
-    {
-        "id": 3,
-        "code": "L01-UN-0001I",
-        "name": "Unidad de Limon",
-        "unitOfMeasure": null
-    },
-     */
-
 
     @Test
     public void testFindById(){

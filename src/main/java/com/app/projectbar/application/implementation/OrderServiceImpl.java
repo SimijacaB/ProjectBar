@@ -34,15 +34,18 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public OrderResponseDTO save(OrderRequestDTO orderRequest) {
+        var order = orderRepository.save(modelMapper.map(orderRequest, Order.class));
 
-        Order order = Order.builder()
+
+
+        /*Order order = Order.builder()
                 .clientName(orderRequest.getClientName())
                 .tableNumber(orderRequest.getTableNumber())
                 .date(LocalDateTime.now())
                 .status(OrderStatus.PENDING)
                 .notes(orderRequest.getNotes())
-                .build();
-        orderRepository.save(order);
+                .build();*/
+
 
         return modelMapper.map(order, OrderResponseDTO.class);
     }

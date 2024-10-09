@@ -3,6 +3,7 @@ package com.app.projectbar.application.implementation;
 import com.app.projectbar.domain.Order;
 import com.app.projectbar.domain.dto.order.OrderRequestDTO;
 import com.app.projectbar.domain.dto.order.OrderResponseDTO;
+import com.app.projectbar.domain.enums.OrderStatus;
 import com.app.projectbar.infra.repositories.IInventoryRepository;
 import com.app.projectbar.infra.repositories.IOrderItemRepository;
 import com.app.projectbar.infra.repositories.IOrderRepository;
@@ -14,7 +15,12 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.modelmapper.ModelMapper;
 
+import java.time.LocalDateTime;
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 class OrderServiceImplTest {
 
@@ -31,18 +37,56 @@ class OrderServiceImplTest {
 
     @InjectMocks
     private OrderServiceImpl orderService;
-    OrderRequestDTO orderRequestDTO;
-    OrderResponseDTO orderResponseDTO;
+    OrderRequestDTO orderRequest;
+    OrderResponseDTO orderResponse;
     Order order;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-
     }
 
     @Test
-    void testSave() {
+    void testSave(){
+
+        Long orderId = 1L;
+        //  ----------- GIVEN -----------
+        orderRequest = new OrderRequestDTO();
+        orderRequest.setClientName("Santiago");
+        orderRequest.setNotes("Cerveza fría");
+        orderRequest.setTableNumber(3);
+
+        order = new Order();
+        order.setId(orderId);
+        order.setClientName(orderRequest.getClientName());
+        order.setTableNumber(orderRequest.getTableNumber());
+        order.setDate(LocalDateTime.now());
+        order.setStatus(OrderStatus.PENDING);
+        order.setNotes(orderRequest.getNotes());
+
+
+        orderResponse = new OrderResponseDTO();
+        orderResponse.setId(orderId);
+        orderResponse.setClientName("Santiago");
+        orderResponse.setDate(LocalDateTime.now());
+        orderResponse.setNotes("Cervea fría");
+        orderResponse.setTableNumber(3);
+
+
+        when(modelMapper.map(orderRequest, Order.class)).thenReturn(order);
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+        when(modelMapper.map(order, OrderResponseDTO.class)).thenReturn(orderResponse);
+
+
+        //  ------- WHEN --------
+        OrderResponseDTO result = orderService.save(orderRequest);
+
+
+        // --------- THEN ------------
+        assertEquals("Santiago", result.getClientName());
+        assertEquals(3, result.getTableNumber());
+
+
 
 
     }
