@@ -4,6 +4,7 @@ import com.app.projectbar.domain.Order;
 import com.app.projectbar.domain.dto.order.OrderForListResponseDTO;
 import com.app.projectbar.domain.dto.order.OrderRequestDTO;
 import com.app.projectbar.domain.dto.order.OrderResponseDTO;
+import com.app.projectbar.domain.dto.order.UpdateOrderDTO;
 import com.app.projectbar.domain.enums.OrderStatus;
 import com.app.projectbar.infra.repositories.IInventoryRepository;
 import com.app.projectbar.infra.repositories.IOrderItemRepository;
@@ -20,9 +21,11 @@ import java.util.Arrays;
 
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class OrderServiceImplTest {
@@ -72,7 +75,8 @@ class OrderServiceImplTest {
         when(modelMapper.map(orderRequest, Order.class)).thenReturn(order);
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(modelMapper.map(order, OrderResponseDTO.class)).thenReturn(orderResponse);
-       }
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+    }
 
     @Test
     void testSave(){
@@ -86,7 +90,7 @@ class OrderServiceImplTest {
 
     @Test
     void findAll() {
-// Configuración específica para findAll
+        // Configuración específica para findAll
         Order order1 = new Order();
         order1.setId(1L);
         order1.setClientName("Client1");
@@ -126,6 +130,7 @@ class OrderServiceImplTest {
         when(orderRepository.findAll()).thenReturn(orders);
         when(modelMapper.map(order1, OrderForListResponseDTO.class)).thenReturn(orderResponse1);
         when(modelMapper.map(order2, OrderForListResponseDTO.class)).thenReturn(orderResponse2);
+        when(this.orderRepository.findById(1L)).thenReturn(Optional.of(order1));
 
         //  ------- WHEN --------
         List<OrderForListResponseDTO> result = orderService.findAll();
@@ -141,21 +146,36 @@ class OrderServiceImplTest {
 
     @Test
     void findById() {
-        //Given
+        // ------- GIVEN ------
         Long id = 1L;
 
+        // ------- WHEN --------
         OrderResponseDTO result = orderService.findById(id);
 
-
-
-
-
-
+        // ------- THEN --------
+        assertEquals(id, result.getId());
+        assertEquals("Santiago", result.getClientName());
+        assertEquals("Cerveza fría", result.getNotes());
+        assertEquals(3, result.getTableNumber());
 
     }
 
     @Test
-    void updateOrder() {
+    void testFindByIdException(){
+        // ----- GIVEN-----
+        Long id = 8L;
+
+        // ----- THEN ------
+        RuntimeException exception = assertThrows(RuntimeException.class , () ->
+                orderService.findById(id));
+
+        assertEquals("Order with id " + id + " not found", exception.getMessage());
+        verify(orderRepository).findById(id);
+
+    }
+    @Test
+    void testUpdateOrder() {
+
     }
 
     @Test
