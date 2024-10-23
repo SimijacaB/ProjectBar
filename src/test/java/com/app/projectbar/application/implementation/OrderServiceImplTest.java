@@ -45,10 +45,14 @@ class OrderServiceImplTest {
     private OrderServiceImpl orderService;
     private OrderRequestDTO orderRequest;
     private OrderResponseDTO orderResponse;
+    private OrderForListResponseDTO OrderListResponse;
+    private OrderForListResponseDTO OrderListResponse2;
+
+    private List<OrderForListResponseDTO> orderResponses;
     private Order order;
+    private Order order2;
     @BeforeEach
     void setUp() {
-
         MockitoAnnotations.openMocks(this);
 
         // Configuración común
@@ -65,6 +69,16 @@ class OrderServiceImplTest {
         order.setStatus(OrderStatus.PENDING);
         order.setNotes(orderRequest.getNotes());
 
+        order2 = new Order();
+        order2.setId(2L);
+        order2.setClientName("Yesika");
+        order2.setTableNumber(2);
+        order2.setDate(LocalDateTime.now());
+        order2.setStatus(OrderStatus.PENDING);
+        order2.setNotes("Notes2");
+
+        List<Order> orders = Arrays.asList(order, order2);
+
         orderResponse = new OrderResponseDTO();
         orderResponse.setId(1L);
         orderResponse.setClientName("Santiago");
@@ -72,7 +86,41 @@ class OrderServiceImplTest {
         orderResponse.setNotes("Cerveza fría");
         orderResponse.setTableNumber(3);
 
+        //Inicializamos OrderForListResponseDto para los métodos: findAll, findByClientName, findByTableNumber
+        OrderListResponse = new OrderForListResponseDTO();
+        OrderListResponse.setId(1L);
+        OrderListResponse.setClientName("Client1");
+        OrderListResponse.setTableNumber(1);
+        OrderListResponse.setDate(LocalDateTime.now());
+        OrderListResponse.setStatus(OrderStatus.PENDING);
+        OrderListResponse.setNotes("Notes1");
+
+        OrderListResponse2 = new OrderForListResponseDTO();
+        OrderListResponse2.setId(2L);
+        OrderListResponse2.setClientName("Client2");
+        OrderListResponse2.setTableNumber(2);
+        OrderListResponse2.setDate(LocalDateTime.now());
+        OrderListResponse2.setStatus(OrderStatus.PENDING);
+        OrderListResponse2.setNotes("Notes2");
+
+        orderResponses = Arrays.asList(OrderListResponse, OrderListResponse2);
+
+        //FindAll
+        when(orderRepository.findAll()).thenReturn(orders);
+
+        //FindByTableNumber
+        when(orderRepository.findByTableNumber(3)).thenReturn(orders);
+        //FindByNameClient
+        when(orderRepository.findByClientName("Santiago")).thenReturn(orders);
+
+        //Mapea cada order a OrderForListResponseDTO
+        when(modelMapper.map(order, OrderForListResponseDTO.class)).thenReturn(OrderListResponse);
+        when(modelMapper.map(order2, OrderForListResponseDTO.class)).thenReturn(OrderListResponse2);
+
         when(modelMapper.map(orderRequest, Order.class)).thenReturn(order);
+
+        //NOTA: CREO QUE DEBEMOS HACER OTRO RESPONSE, EL CUAL VA A GENERAR DESPUÉS DE REALIZAR LA ACTUALIZACIÓN DE LA ORDEN, YA QUE ESTA DEVOLVIENDO EL RESPONSE DEL SAVE O EL GENERAL
+        //VOLVER A PROBAR EL MÉTODO UPDATEORDER
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(modelMapper.map(order, OrderResponseDTO.class)).thenReturn(orderResponse);
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
@@ -90,56 +138,17 @@ class OrderServiceImplTest {
 
     @Test
     void findAll() {
-        // Configuración específica para findAll
-        Order order1 = new Order();
-        order1.setId(1L);
-        order1.setClientName("Client1");
-        order1.setTableNumber(1);
-        order1.setDate(LocalDateTime.now());
-        order1.setStatus(OrderStatus.PENDING);
-        order1.setNotes("Notes1");
-
-        Order order2 = new Order();
-        order2.setId(2L);
-        order2.setClientName("Client2");
-        order2.setTableNumber(2);
-        order2.setDate(LocalDateTime.now());
-        order2.setStatus(OrderStatus.PENDING);
-        order2.setNotes("Notes2");
-
-        List<Order> orders = Arrays.asList(order1, order2);
-
-        OrderForListResponseDTO orderResponse1 = new OrderForListResponseDTO();
-        orderResponse1.setId(1L);
-        orderResponse1.setClientName("Client1");
-        orderResponse1.setTableNumber(1);
-        orderResponse1.setDate(LocalDateTime.now());
-        orderResponse1.setStatus(OrderStatus.PENDING);
-        orderResponse1.setNotes("Notes1");
-
-        OrderForListResponseDTO orderResponse2 = new OrderForListResponseDTO();
-        orderResponse2.setId(2L);
-        orderResponse2.setClientName("Client2");
-        orderResponse2.setTableNumber(2);
-        orderResponse2.setDate(LocalDateTime.now());
-        orderResponse2.setStatus(OrderStatus.PENDING);
-        orderResponse2.setNotes("Notes2");
-
-        List<OrderForListResponseDTO> orderResponses = Arrays.asList(orderResponse1, orderResponse2);
-
-        when(orderRepository.findAll()).thenReturn(orders);
-        when(modelMapper.map(order1, OrderForListResponseDTO.class)).thenReturn(orderResponse1);
-        when(modelMapper.map(order2, OrderForListResponseDTO.class)).thenReturn(orderResponse2);
-        when(this.orderRepository.findById(1L)).thenReturn(Optional.of(order1));
 
         //  ------- WHEN --------
         List<OrderForListResponseDTO> result = orderService.findAll();
 
         // --------- THEN ------------
         assertEquals(2, result.size());
-        assertEquals(orderResponse1, result.get(0));
-        assertEquals(orderResponse2, result.get(1));
+        assertEquals(OrderListResponse, result.get(0));
+        assertEquals(OrderListResponse2, result.get(1));
         assertEquals(orderResponses, result);
+        verify(orderRepository).findAll();
+
     }
 
 
@@ -157,6 +166,8 @@ class OrderServiceImplTest {
         assertEquals("Santiago", result.getClientName());
         assertEquals("Cerveza fría", result.getNotes());
         assertEquals(3, result.getTableNumber());
+        verify(orderRepository).findById(id);
+
 
     }
 
@@ -175,19 +186,86 @@ class OrderServiceImplTest {
     }
     @Test
     void testUpdateOrder() {
+        // --- GIVEN ---
+        Long id = 1L;
+        UpdateOrderDTO updateOrderDTO = new UpdateOrderDTO();
+        updateOrderDTO.setId(id);
+        updateOrderDTO.setClientName("Santiago");
+        updateOrderDTO.setNotes("Cerveza con hielo");
+        updateOrderDTO.setTableNumber(3);
 
+        // --- WHEN ---
+        OrderResponseDTO result = orderService.updateOrder(updateOrderDTO);
+
+        // --- THEN ---
+        assertEquals(id, result.getId());
+        assertEquals("Santiago", result.getClientName());
+        assertEquals("Cerveza con hielo", result.getNotes());
+        assertEquals(3, result.getTableNumber());
+        verify(orderRepository).findById(id);
+        verify(orderRepository).save(any(Order.class));
+
+        //NOTA: CREO QUE DEBEMOS HACER OTRO RESPONSE, EL CUAL VA A GENERAR DESPUÉS DE REALIZAR LA ACTUALIZACIÓN DE LA ORDEN, YA QUE ESTA DEVOLVIENDO EL RESPONSE DEL SAVE O EL GENERAL
+        //VOLVER A PROBAR EL MÉTODO UPDATEORDER. USAR NUEVAMENTE EL DEBUG PARA LOCALIZAR LOS ERRORES.
     }
 
     @Test
-    void deleteOrder() {
+    void testUpdateOrderException() {
+        // --- GIVEN ---
+        UpdateOrderDTO updateOrderDTO = new UpdateOrderDTO();
+        updateOrderDTO.setId(8L); // id inexistente
+
+        // ---- THEN -----
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            orderService.updateOrder(updateOrderDTO);
+        });
+
+        assertEquals("Order with id " + updateOrderDTO.getId() + " not found", exception.getMessage());
+        verify(orderRepository).findById(updateOrderDTO.getId());
+    }
+
+    @Test
+    void testDeleteOrder() {
+        // --- GIVEN ---
+        Long id = 1L;
+
+        // --- WHEN ---
+        orderService.deleteOrder(id);
+
+        // ---- THEN ----
+        verify(orderRepository).deleteById(id);
     }
 
     @Test
     void findByClientName() {
+        // --- GIVEN ---
+        String clientName = "Santiago";
+
+        // --- WHEN ---
+        List<OrderForListResponseDTO> result = orderService.findByClientName(clientName);
+
+        // --- THEN ---
+        assertEquals(orderResponses, result);
+        verify(orderRepository).findByClientName(clientName);
+
+
     }
 
     @Test
     void findByTableNumber() {
+        // --- GIVEN ---
+        Integer tableNum = 3;
+
+        // --- WHEN ---
+        List<OrderForListResponseDTO> result = orderService.findByTableNumber(tableNum);
+
+        // --- THEN ---
+        assertEquals(2, result.size());
+        assertEquals(OrderListResponse, result.get(0));
+        assertEquals(OrderListResponse2, result.get(1));
+        assertEquals(orderResponses, result);
+        verify(orderRepository).findByTableNumber(tableNum);
+
     }
 
     @Test
