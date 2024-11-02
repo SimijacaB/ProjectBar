@@ -47,7 +47,6 @@ class OrderServiceImplTest {
     private OrderResponseDTO orderResponse;
     private OrderForListResponseDTO OrderListResponse;
     private OrderForListResponseDTO OrderListResponse2;
-
     private List<OrderForListResponseDTO> orderResponses;
     private Order order;
     private Order order2;

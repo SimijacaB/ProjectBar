@@ -33,7 +33,7 @@ public class OrderController {
 
     @PutMapping("/update")
     @Transactional
-    public ResponseEntity<OrderResponseDTO> update(@RequestBody UpdateOrderDTO updateOrderDTO){
+    public ResponseEntity<OrderResponseDTO> update(@RequestBody @Valid UpdateOrderDTO updateOrderDTO){
         return ResponseEntity.ok(orderService.updateOrder(updateOrderDTO));
     }
 
@@ -45,7 +45,7 @@ public class OrderController {
 
     @PutMapping("/add-order-item/{idOrder}")
     @Transactional
-    public ResponseEntity<OrderResponseDTO> addOrderItem( @PathVariable Long idOrder, @RequestBody OrderItemRequestDTO itemRequestDTO){
+    public ResponseEntity<OrderResponseDTO> addOrderItem( @PathVariable Long idOrder, @RequestBody @Valid OrderItemRequestDTO itemRequestDTO){
         return ResponseEntity.ok(orderService.addOrderItem(idOrder, itemRequestDTO));
     }
 

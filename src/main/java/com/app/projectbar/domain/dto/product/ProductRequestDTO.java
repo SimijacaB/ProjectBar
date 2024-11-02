@@ -19,11 +19,11 @@ import java.util.List;
 public class ProductRequestDTO {
 
     @NotBlank
-    @Pattern(regexp = "^[a-zA-Z\\s\\p{Punct}]+$")
+    @Pattern(regexp = "^[a-zA-ZñÑáéíóúÁÉÍÓÚ\\s\\p{Punct}]+$", message = "Name must contain only letters, spaces, and punctuation")
     @Size(min = 3, message = "Name must have at least 10 characters")
     private String name;
 
-    @Pattern(regexp = "^[A-Z]{1}[0-9]{2}-{1}[A-Z]{2}-{1}[0-9]{4}[A-Z]{1}$")
+    @Pattern(regexp = "^[A-Z]{1}[0-9]{2}-{1}[A-Z]{2}-{1}[0-9]{4}[A-Z]{1}$", message = "Code must follow the pattern A99-AA-9999A")
     private String code;
 
     @NotBlank

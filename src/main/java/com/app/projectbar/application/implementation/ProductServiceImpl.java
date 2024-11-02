@@ -40,7 +40,15 @@ public class ProductServiceImpl implements IProductService {
     public ProductResponseDTO findById(Long id) {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product with id " + id + " not found"));
-        return modelMapper.map(product, ProductResponseDTO.class);
+        ProductResponseDTO productResponseDTO = modelMapper.map(product, ProductResponseDTO.class);
+
+        // Map ingredient_id for each ingredient in the response DTO
+        for (int i = 0; i < productResponseDTO.getIngredients().size(); i++) {
+            productResponseDTO.getIngredients().get(i).setIngredient_id(product.getProductIngredients().get(i).getIngredient().getId());
+            productResponseDTO.getIngredients().get(i).setIngredientExtend(product.getProductIngredients().get(i).getIngredient().getUnitOfMeasure().toString());
+        }
+
+        return productResponseDTO;
     }
 
     @Override
