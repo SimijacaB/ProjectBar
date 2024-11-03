@@ -27,6 +27,7 @@ public class ProductRequestDTO {
     private String code;
 
     @NotBlank
+    @Pattern(regexp = "^[a-zA-Z0-9\\s\\p{Punct}]", message = "Description cannot contains special characters")
     private String description;
 
     @NotNull
@@ -40,6 +41,7 @@ public class ProductRequestDTO {
 
     @NotNull
     @Enumerated(EnumType.STRING)
+    @Pattern(regexp = "^(BEER|WINE|COCKTAILS|JUICES)$", message = "The available categories to choose from are: 'BEER', 'WINE', 'COCKTAILS', 'JUICES'.")
     private Category category;
 
     private List<ProductIngredientRequestDTO> ingredients;

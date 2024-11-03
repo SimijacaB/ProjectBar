@@ -32,6 +32,10 @@ public class InventoryServiceImpl implements IInventoryService {
         if(product.isEmpty() && ingredient.isEmpty()){
             throw new RuntimeException("Product not found by code " + inventoryRequest.getCode());
         }
+        Optional<Inventory> inventoryOptional = inventoryRepository.findByCode(inventoryRequest.getCode());
+        if (inventoryOptional.isPresent()){
+            throw new RuntimeException("Inventory already exist by code: " + inventoryRequest.getCode());
+        }
         Inventory inventory = inventoryRepository.save(modelMapper.map(inventoryRequest, Inventory.class));
         InventoryResponseDTO response = modelMapper.map(inventory, InventoryResponseDTO.class);
 

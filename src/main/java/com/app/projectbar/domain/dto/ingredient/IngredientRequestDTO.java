@@ -17,15 +17,15 @@ import java.util.List;
 @Builder
 public class IngredientRequestDTO {
 
-    @Pattern(regexp = "^[A-Z]{1}[0-9]{2}-{1}[A-Z]{2}-{1}[0-9]{4}[A-Z]{1}$")
+    @Pattern(regexp = "^[A-Z]{1}[0-9]{2}-{1}[A-Z]{2}-{1}[0-9]{4}[A-Z]{1}$", message =  "Code must follow the pattern A99-AA-9999A")
     private String code;
 
     @NotBlank
-    @Pattern(regexp = "^[a-zA-Z\\s\\p{Punct}]+$")
-    @Size(min = 3, message = "Name must have at least 10 characters")
+    @Pattern(regexp = "^[a-zA-Z\\s\\p{Punct}]+$", message = "Name can´t contains numbers and special characters")
+    @Size(min = 3, message = "Name must have at least 3 characters")
     private String name;
 
-    @NotNull
+    @NotNull(message = "UnitOfMeasure can´t be null")
     private String unitOfMeasure;
 
 

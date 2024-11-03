@@ -6,6 +6,7 @@ import com.app.projectbar.domain.dto.ingredient.IngredientResponseDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,6 +39,7 @@ public class IngredientController {
         return ResponseEntity.ok(ingredientService.save(ingredientRequest));
     }
     @DeleteMapping("/delete/{code}")
+    @Transactional
     public void delete(@PathVariable String code) {
         ingredientService.delete(code);
     }
