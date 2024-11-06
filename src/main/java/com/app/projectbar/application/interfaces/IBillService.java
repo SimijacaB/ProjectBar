@@ -19,4 +19,10 @@ public interface IBillService {
 
     void delete(Long billNumber);
 
+    BillResponseDTO generateBillByTable(Integer tableNumber);
+
+    BillResponseDTO generateBillByClient(String clientName);
+
+    BillResponseDTO generateBillBySelection(List<Long> orderIds);
+
 }
