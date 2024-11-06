@@ -19,14 +19,14 @@ import java.util.List;
 public class OrderRequestDTO {
 
     @NotBlank
-    @Pattern(regexp = "^[a-zA-Z\\s\\p{Punct}]+$")
-    @Size(min = 4, message = "Name must have at least 4 characters")
+    @Pattern(regexp = "^[a-zA-Z\\s\\p{Punct}]+$", message = "Can´t contains numbers and special characters")
+    @Size(min = 4, message = "Must have at least 4 characters")
     private String clientName;
 
     @NotNull
+    @Pattern(regexp = "^\\d+$", message = "Must have only numbers")
     private Integer tableNumber;
 
-    @NotBlank
     private String notes;
 
     private List<OrderItemRequestDTO> orderProducts;

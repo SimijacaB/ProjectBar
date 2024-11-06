@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class InventoryDTO {
 
-    @Pattern(regexp = "^[A-Z]{1}[0-9]{2}-{1}[A-Z]{2}-{1}[0-9]{4}[A-Z]{1}$")
+    @Pattern(regexp = "^[A-Z]{1}[0-9]{2}-{1}[A-Z]{2}-{1}[0-9]{4}[A-Z]{1}$", message =  "Code must follow the pattern A99-AA-9999A")
     private String code;
 
     @Min(value = 0, message = "Value must be zero or positive")

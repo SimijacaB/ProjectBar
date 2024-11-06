@@ -101,7 +101,7 @@ public class ProductServiceImpl implements IProductService {
                 .map(product -> modelMapper.map(product, ProductForListResponseDTO.class)).toList();
     }
 
-    public ProductResponseDTO saveOrUpdate(Product product, ProductRequestDTO productRequest) {
+   /* public ProductResponseDTO saveOrUpdate(Product product, ProductRequestDTO productRequest) {
 
         product.setName(productRequest.getName());
         product.setCode(productRequest.getCode());
@@ -143,7 +143,60 @@ public class ProductServiceImpl implements IProductService {
         }
         return productResponseDTO;
 
-    }
+    }*/
+   public ProductResponseDTO saveOrUpdate(Product product, ProductRequestDTO productRequest) {
+
+       product.setName(productRequest.getName());
+       product.setCode(productRequest.getCode());
+       product.setDescription(productRequest.getDescription());
+       product.setPrice(productRequest.getPrice());
+       product.setPhotoId(productRequest.getPhotoId());
+       product.setIsPrepared(productRequest.getIsPrepared());
+       product.setCategory(productRequest.getCategory());
+
+       // Actualizar las relaciones de ProductIngredient
+       List<ProductIngredient> existingIngredients = product.getProductIngredients();
+       List<ProductIngredient> newIngredients = productRequest.getIngredients()
+               .stream()
+               .map(piRequest -> {
+                   Ingredient ingredient = ingredientRepository.findById(piRequest.getIngredientId())
+                           .orElseThrow(() -> new RuntimeException("Ingredient with ID " + piRequest.getIngredientId() + " not found"));
+                   return ProductIngredient.builder()
+                           .product(product)
+                           .ingredient(ingredient)
+                           .amount(piRequest.getAmount())
+                           .build();
+               })
+               .toList();
+
+       // Eliminar ingredientes que ya no están en la lista
+       existingIngredients.removeIf(existingIngredient ->
+               newIngredients.stream().noneMatch(newIngredient ->
+                       newIngredient.getIngredient().getId().equals(existingIngredient.getIngredient().getId())
+               )
+       );
+
+       // Agregar o actualizar ingredientes
+       for (ProductIngredient newIngredient : newIngredients) {
+           existingIngredients.stream()
+                   .filter(existingIngredient -> existingIngredient.getIngredient().getId().equals(newIngredient.getIngredient().getId()))
+                   .findFirst()
+                   .ifPresentOrElse(
+                           existingIngredient -> existingIngredient.setAmount(newIngredient.getAmount()),
+                           () -> existingIngredients.add(newIngredient)
+                   );
+       }
+
+       product.setProductIngredients(existingIngredients);
+       Product savedProduct = productRepository.save(product);
+
+       ProductResponseDTO productResponseDTO = modelMapper.map(savedProduct, ProductResponseDTO.class);
+       for (int i = 0; i < productResponseDTO.getIngredients().size(); i++) {
+           productResponseDTO.getIngredients().get(i).setIngredient_id(savedProduct.getProductIngredients().get(i).getIngredient().getId());
+           productResponseDTO.getIngredients().get(i).setIngredientExtend(savedProduct.getProductIngredients().get(i).getIngredient().getUnitOfMeasure().toString());
+       }
+       return productResponseDTO;
+   }
 
 
 }
