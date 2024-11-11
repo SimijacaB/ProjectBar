@@ -33,12 +33,6 @@ public class Bill {
     @Column(name = "total_amount")
     private Double totalAmount;
 
-    @Column(name = "tax_amount")
-    private Double taxAmount;
-
-    @Column(name = "discount_amount")
-    private Double discountAmount;
-
     @Column(name = "created_by")
     private String createdBy;
 

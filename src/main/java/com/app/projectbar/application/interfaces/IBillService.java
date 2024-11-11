@@ -1,28 +1,25 @@
 package com.app.projectbar.application.interfaces;
 
-import com.app.projectbar.domain.dto.bill.BillRequestDTO;
-import com.app.projectbar.domain.dto.bill.BillResponseDTO;
-import com.app.projectbar.domain.dto.ingredient.IngredientRequestDTO;
-import com.app.projectbar.domain.dto.ingredient.IngredientResponseDTO;
+import com.app.projectbar.domain.dto.bill.BillDTO;
 
 import java.util.List;
 
 public interface IBillService {
 
-    BillResponseDTO findById(Long id);
+    BillDTO findById(Long id);
 
-    BillResponseDTO findByNumber(Long number);
+    BillDTO findByNumber(Long number);
 
-    BillResponseDTO save(BillRequestDTO billRequest);
+    BillDTO save(BillDTO billRequest);
 
-    List<BillResponseDTO> findAll();
+    List<BillDTO> findAll();
 
     void delete(Long billNumber);
 
-    BillResponseDTO generateBillByTable(Integer tableNumber);
+    void generateBillByTable(Integer tableNumber, String clientName);
 
-    BillResponseDTO generateBillByClient(String clientName);
+    BillDTO generateBillByClient(String clientName);
 
-    BillResponseDTO generateBillBySelection(List<Long> orderIds);
+    BillDTO generateBillBySelection(List<Long> orderIds);
 
 }
