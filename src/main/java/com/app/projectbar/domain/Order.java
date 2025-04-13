@@ -42,15 +42,20 @@ public class Order {
     @DateTimeFormat(pattern = "dd-MM-yyyy HH:mm:ss")
     private LocalDateTime date;
 
-
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true )
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private List<OrderItem> orderProducts;
+    private List<OrderItem> orderItems;
 
-    @PrePersist //Se ejecuta antes de que se guarde en la base de datos
+    @ManyToOne
+    @JoinColumn(name = "bill_id")
+    private Bill bill;
+
+    @PrePersist
     protected void onCreate() {
         if (status == null) {
             status = OrderStatus.PENDING;
+        }
+        if (date == null) {
             date = LocalDateTime.now();
         }
     }

@@ -2,6 +2,7 @@ package com.app.projectbar.domain.dto.order;
 
 
 import com.app.projectbar.domain.OrderItem;
+import com.app.projectbar.domain.dto.orderItem.OrderItemResponseDTO;
 import com.app.projectbar.domain.enums.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,7 +32,7 @@ public class OrderResponseDTO {
 
     private LocalDateTime date;
 
-    private List<OrderItem> orderProducts;
+    private List<OrderItemResponseDTO> orderItemList;
 
     private Double valueToPay;
 

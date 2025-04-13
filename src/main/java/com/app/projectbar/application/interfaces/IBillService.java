@@ -1,5 +1,7 @@
 package com.app.projectbar.application.interfaces;
 
+import com.app.projectbar.domain.Bill;
+import com.app.projectbar.domain.Order;
 import com.app.projectbar.domain.dto.bill.BillDTO;
 
 import java.util.List;
@@ -10,13 +12,11 @@ public interface IBillService {
 
     BillDTO findByNumber(Long number);
 
-    BillDTO save(BillDTO billRequest);
-
     List<BillDTO> findAll();
 
     void delete(Long billNumber);
 
-    void generateBillByTable(Integer tableNumber, String clientName);
+    BillDTO generateBillByTable(Integer tableNumber, String clientName);
 
     BillDTO generateBillByClient(String clientName);
 

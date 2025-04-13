@@ -25,7 +25,8 @@ public class Bill {
     @Column(name = "billing_date")
     private LocalDateTime billingDate;
 
-    private List<OrderItem> items;
+    @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Order> orders;
 
     @Column(name = "bill_number")
     private Long billNumber;

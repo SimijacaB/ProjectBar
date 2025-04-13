@@ -7,6 +7,7 @@ import com.app.projectbar.domain.dto.order.OrderRequestDTO;
 import com.app.projectbar.domain.dto.order.OrderResponseDTO;
 import com.app.projectbar.domain.dto.order.UpdateOrderDTO;
 import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
+import com.app.projectbar.domain.dto.orderItem.OrderItemResponseDTO;
 import com.app.projectbar.domain.enums.OrderStatus;
 import com.app.projectbar.infra.repositories.IInventoryRepository;
 import com.app.projectbar.infra.repositories.IOrderItemRepository;
@@ -14,12 +15,13 @@ import com.app.projectbar.infra.repositories.IOrderRepository;
 import com.app.projectbar.infra.repositories.IProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,23 +33,19 @@ public class OrderServiceImpl implements IOrderService {
     private final IProductRepository productRepository;
     private final IInventoryRepository inventoryRepository;
 
-
     @Override
     public OrderResponseDTO save(OrderRequestDTO orderRequest) {
-        var order = orderRepository.save(modelMapper.map(orderRequest, Order.class));
 
+        //Se intenta obtener el usuario autenticado que crea la order, hay que tener en
+        // cuenta que los demás usuarios que estén autenticados pueden agregar orderItems
+        // a la order, los lo tanto, para nuestra lógica podemos considerar que solo el mesero
+        // que la creo pueda agregar mas orderItems.
+        String waiterId = SecurityContextHolder.getContext().getAuthentication().getName();
 
-
-        /*Order order = Order.builder()
-                .clientName(orderRequest.getClientName())
-                .tableNumber(orderRequest.getTableNumber())
-                .date(LocalDateTime.now())
-                .status(OrderStatus.PENDING)
-                .notes(orderRequest.getNotes())
-                .build();*/
-
-
-        return modelMapper.map(order, OrderResponseDTO.class);
+        Order newOrder = modelMapper.map(orderRequest, Order.class);
+        newOrder.setWaiterId(waiterId);
+        newOrder = orderRepository.save(newOrder);
+        return modelMapper.map(newOrder, OrderResponseDTO.class);
     }
 
     @Override
@@ -59,8 +57,24 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public OrderResponseDTO findById(Long id) {
-        return modelMapper.map(orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order with id " + id + " not found")), OrderResponseDTO.class);
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order with id " + id + " not found"));
+
+        //Se mapea la lista de orderItems y se cambia la lista de OrderResponse de OrderItem a OrderItemResponseDTO
+
+        OrderResponseDTO orderResponseDTO = modelMapper.map(order, OrderResponseDTO.class);
+        List<OrderItemResponseDTO> orderItemDTOs = order.getOrderItems().stream()
+                .map(orderItem -> {
+                    OrderItemResponseDTO dto = new OrderItemResponseDTO();
+                    dto.setId(orderItem.getId());
+                    dto.setProductName(orderItem.getProduct().getName());
+                    dto.setQuantity(orderItem.getQuantity());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+        orderResponseDTO.setOrderItemList(orderItemDTOs);
+
+        return orderResponseDTO;
     }
 
     @Override
@@ -107,53 +121,57 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public List<OrderForListResponseDTO> findByStatus(OrderStatus status) {
-        List<Order> orders = orderRepository.findByStatus(status);
-        return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
+        return null;
     }
 
     @Override
-    public OrderResponseDTO addOrderItem(Long id, OrderItemRequestDTO orderItemToAdd) {
+    public OrderResponseDTO addOrderItem(Long orderId, OrderItemRequestDTO orderItemToAdd) {
+        // 1. Recuperar la orden existente
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found with id: " + " id"));
+        // 2. Validar el producto
+        Product product = productRepository.findOneByName(orderItemToAdd.getProductName())
+                .orElseThrow(() -> new RuntimeException("Product not found with name: " + orderItemToAdd.getProductName()));
 
-        OrderItem orderItem = OrderItem.builder()
-                .productName(orderItemToAdd.getProductName())
-                .quantity(orderItemToAdd.getQuantity())
-                .order(order)
-                .build();
+        Optional<OrderItem> existingOrderItem = order.getOrderItems().stream()
+                .filter(item -> item.getProduct().getId().equals(product.getId()))
+                .findFirst();
 
-        OrderItem orderItemExists = null;
-
-
-        for (OrderItem oi : order.getOrderProducts()) {
-            if (oi.getProductName().equalsIgnoreCase(orderItem.getProductName())) {
-                orderItemExists = oi;
-                break;
-            }
-        }
-
-        if (orderItemExists != null) {
-            orderItemExists.setQuantity(orderItemToAdd.getQuantity() + orderItemExists.getQuantity());
-            orderItemRepository.save(orderItemExists);
-
+        if (existingOrderItem.isPresent()) {
+            System.out.println("Product name: " + existingOrderItem.get().getProductName());
         } else {
-            order.getOrderProducts().add(orderItem);
-            orderItemRepository.save(orderItem);
+            System.out.println("No matching OrderItem found for Product ID: " + product.getId());
         }
 
-        double total = order.getOrderProducts().stream()
-                .mapToDouble(item -> item.getQuantity() * productRepository.findByName(item.getProductName()).get().stream().findFirst().get().getPrice())
+        if (existingOrderItem.isPresent()) {
+            // 4. Actualizar la cantidad si ya existe
+            OrderItem orderItem = existingOrderItem.get();
+            orderItem.setQuantity(orderItem.getQuantity() + orderItemToAdd.getQuantity());
+        } else {
+            // 5. Crear un nuevo OrderItem y asociarlo a la orden
+            OrderItem newOrderItem = OrderItem.builder()
+                    .product(product)
+                    .productName(product.getName())
+                    .quantity(orderItemToAdd.getQuantity())
+                    .price(product.getPrice()) // Asignar el precio actual del producto
+                    .order(order)
+                    .build();
+            order.getOrderItems().add(newOrderItem);
+        }
+
+        //Se modifica el método para poder calcular correctamente el valor total de cada producto
+
+        double total = order.getOrderItems().stream()
+                .mapToDouble(item -> item.getQuantity() * item.getProduct().getPrice())
                 .sum();
-
-
         order.setValueToPay(total);
-        
-        order.setStatus(OrderStatus.PENDING);
 
-        order = orderRepository.save(order);
+        // 7. Guardar la orden actualizada
+        Order updatedOrder = orderRepository.save(order);
 
-        return modelMapper.map(order, OrderResponseDTO.class);
+        // 8. Convertir la orden a DTO y retornarla
+        return modelMapper.map(updatedOrder, OrderResponseDTO.class);
     }
 
     @Override
@@ -164,14 +182,14 @@ public class OrderServiceImpl implements IOrderService {
         }
         Order order = orderOptional.get();
 
-        OrderItem orderItem = order.getOrderProducts()
+        OrderItem orderItem = order.getOrderItems()
                 .stream()
                 .filter(findOrderItem -> findOrderItem.getId() == idOrderItem)
                 .findFirst().get();
 
 
-        order.getOrderProducts().remove(modelMapper.map(orderItem, OrderItem.class));
-        order.setOrderProducts(order.getOrderProducts());
+        order.getOrderItems().remove(modelMapper.map(orderItem, OrderItem.class));
+        order.setOrderItems(order.getOrderItems());
 
         return modelMapper.map(orderRepository.save(order), OrderResponseDTO.class);
 
@@ -185,10 +203,9 @@ public class OrderServiceImpl implements IOrderService {
         }
         Order order = orderOptional.get();
 
-        //Solo entra aquí si el estado a cambiar  a ready(Cambiar la opcion de estado), es decir una vez esa
-        // orden este en ese estado va a tomar todos los orderItem y va a inventory y  descontar esas cantidades.
+        // Solo entra aquí si el estado a cambiar es "READY"
         if (newStatus.equals(OrderStatus.READY.toString())) {
-            for (OrderItem item : order.getOrderProducts()) {
+            for (OrderItem item : order.getOrderItems()) {
                 deductInventory(item);
             }
         }
@@ -199,8 +216,8 @@ public class OrderServiceImpl implements IOrderService {
         return modelMapper.map(orderRepository.save(order), OrderResponseDTO.class);
     }
 
+    // Método privado para deducir inventario
     private void deductInventory(OrderItem orderItem) {
-
         String code = productRepository.findByName(orderItem.getProductName())
                 .stream().findFirst().get().get(0).getCode();
 
@@ -221,14 +238,11 @@ public class OrderServiceImpl implements IOrderService {
                 if (inventory.isEmpty()) {
                     throw new RuntimeException("Ingredient with id " + code + " not found");
                 }
-                inventory.get().setQuantity((int) (inventory.get().getQuantity() - (orderItem.getQuantity() * productIngredient.getAmount())));
+                inventory.get().setQuantity((int) (inventory.get().getQuantity() -
+                        (orderItem.getQuantity() * productIngredient.getAmount())));
                 inventoryRepository.save(inventory.get());
             }
-
         }
-
-
     }
-
 
 }

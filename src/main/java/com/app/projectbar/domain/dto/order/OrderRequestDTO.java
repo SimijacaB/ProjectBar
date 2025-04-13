@@ -1,10 +1,7 @@
 package com.app.projectbar.domain.dto.order;
 
 import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,7 +21,7 @@ public class OrderRequestDTO {
     private String clientName;
 
     @NotNull
-    @Pattern(regexp = "^\\d+$", message = "Must have only numbers")
+    @Min(value = 1, message = "Must be a positive number")
     private Integer tableNumber;
 
     private String notes;

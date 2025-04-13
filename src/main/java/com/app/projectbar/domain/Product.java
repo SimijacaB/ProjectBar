@@ -4,6 +4,7 @@ import com.app.projectbar.domain.enums.Category;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Setter
@@ -31,6 +32,7 @@ public class Product {
     @Column(name = "photo_id")
     private Long photoId;
 
+    @Column(nullable = false)
     private Double price;
 
     @Column(name = "is_prepared")
@@ -40,6 +42,6 @@ public class Product {
     private Category category;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductIngredient> productIngredients ;
+    private List<ProductIngredient> productIngredients = new ArrayList<>(); ;
 
 }
