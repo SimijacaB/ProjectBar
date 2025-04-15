@@ -25,6 +25,7 @@
         private final ModelMapper modelMapper;
         private final IProductRepository productRepository;
         private final OrderServiceImpl orderService;
+        private final InventoryServiceImpl inventoryService;
 
 
 
@@ -102,35 +103,7 @@
 
 
         public BillDTO generateItemForBill(List<Order> orders) {
-//            Map<Product, Integer> productQuantities = new HashMap<>();
 //
-//            orders.forEach( order -> order.getOrderItems()
-//                    .forEach( item -> {
-//                        Product product = item.getProduct();
-//                        productQuantities.merge(product, item.getQuantity(), Integer::sum);
-//                    }));
-//
-//            // Crear los item consolidados
-//            List<OrderItem> consolidatedItems = productQuantities.entrySet().stream()
-//                    .map(entry -> OrderItem.builder()
-//                            .product(entry.getKey())
-//                            .quantity(entry.getValue())
-//                            .price(entry.getKey().getPrice())
-//                            .build())
-//                    .toList();
-//
-//            // Crear Factura
-//            Bill bill = Bill.builder()
-//                    .billingDate(LocalDateTime.now())
-//                    .orders(orders)
-//                    .billNumber(generateBillNumber())
-//                    .totalAmount(calculateTotalAmount(consolidatedItems))
-//                    .createdBy("Sistema")
-//                    .build();
-//
-//            return modelMapper.map(bill, BillDTO.class);
-
-
             // Mapa que usa el ID del producto como clave
             Map<Long, OrderItem> productMap = new HashMap<>();
 
@@ -154,6 +127,12 @@
             }
 
             List<OrderItem> consolidatedItems = new ArrayList<>(productMap.values());
+
+            for (OrderItem orderItem : consolidatedItems){
+                String code = orderItem.getProduct().getCode();
+                Integer quantity = orderItem.getQuantity();
+                inventoryService.deductStock(quantity, code);
+            }
 
             // Crear la factura
             Bill bill = Bill.builder()
