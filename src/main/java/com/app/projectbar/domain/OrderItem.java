@@ -34,6 +34,6 @@ public class OrderItem {
     private Double price;
 
     public Double getPrice() {
-        return price * quantity;
+        return price;
     }
 }

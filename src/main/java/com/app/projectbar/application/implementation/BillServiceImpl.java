@@ -102,24 +102,60 @@
 
 
         public BillDTO generateItemForBill(List<Order> orders) {
-            Map<Product, Integer> productQuantities = new HashMap<>();
+//            Map<Product, Integer> productQuantities = new HashMap<>();
+//
+//            orders.forEach( order -> order.getOrderItems()
+//                    .forEach( item -> {
+//                        Product product = item.getProduct();
+//                        productQuantities.merge(product, item.getQuantity(), Integer::sum);
+//                    }));
+//
+//            // Crear los item consolidados
+//            List<OrderItem> consolidatedItems = productQuantities.entrySet().stream()
+//                    .map(entry -> OrderItem.builder()
+//                            .product(entry.getKey())
+//                            .quantity(entry.getValue())
+//                            .price(entry.getKey().getPrice())
+//                            .build())
+//                    .toList();
+//
+//            // Crear Factura
+//            Bill bill = Bill.builder()
+//                    .billingDate(LocalDateTime.now())
+//                    .orders(orders)
+//                    .billNumber(generateBillNumber())
+//                    .totalAmount(calculateTotalAmount(consolidatedItems))
+//                    .createdBy("Sistema")
+//                    .build();
+//
+//            return modelMapper.map(bill, BillDTO.class);
 
-            orders.forEach( order -> order.getOrderItems()
-                    .forEach( item -> {
-                        Product product = item.getProduct();
-                        productQuantities.merge(product, item.getQuantity(), Integer::sum);
-                    }));
 
-            // Crear los item consolidados
-            List<OrderItem> consolidatedItems = productQuantities.entrySet().stream()
-                    .map(entry -> OrderItem.builder()
-                            .product(entry.getKey())
-                            .quantity(entry.getValue())
-                            .price(entry.getKey().getPrice())
-                            .build())
-                    .toList();
+            // Mapa que usa el ID del producto como clave
+            Map<Long, OrderItem> productMap = new HashMap<>();
 
-            // Crear Factura
+            for (Order order : orders) {
+                for (OrderItem item : order.getOrderItems()) {
+                    Long productId = item.getProduct().getId();
+
+                    if (productMap.containsKey(productId)) {
+                        OrderItem existingItem = productMap.get(productId);
+                        existingItem.setQuantity(existingItem.getQuantity() + item.getQuantity());
+                    } else {
+                        // Clonar el item para evitar modificar los originales
+                        OrderItem newItem = OrderItem.builder()
+                                .product(item.getProduct())
+                                .quantity(item.getQuantity())
+                                .price(item.getProduct().getPrice())
+                                .build();
+                        productMap.put(productId, newItem);
+                    }
+                }
+            }
+
+            List<OrderItem> consolidatedItems = new ArrayList<>(productMap.values());
+
+            // Crear la factura
             Bill bill = Bill.builder()
                     .billingDate(LocalDateTime.now())
                     .orders(orders)
@@ -129,6 +165,7 @@
                     .build();
 
             return modelMapper.map(bill, BillDTO.class);
+
         }
 
 
@@ -140,7 +177,7 @@
 
         private Double calculateTotalAmount(List<OrderItem> orderItems) {
             return orderItems.stream()
-                    .mapToDouble( item -> item.getPrice() * item.getQuantity())
+                    .mapToDouble(item -> item.getPrice() * item.getQuantity())
                     .sum();
         }
     }

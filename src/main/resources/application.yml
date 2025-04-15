@@ -8,7 +8,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/bar_db
     username: root
-    password: toor
+    password: root
 
   jpa:
     hibernate:

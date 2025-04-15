@@ -12,7 +12,7 @@ import java.util.Set;
 @Setter
 @Getter
 @Entity
-@Table (name = "users")
+@Table (name = "users", uniqueConstraints = @UniqueConstraint(columnNames = "username"))
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserEntity {
@@ -38,8 +38,6 @@ public class UserEntity {
     @CollectionTable(name = "user_role", joinColumns = @JoinColumn(name = "username"))
     @Column(name = "role")
     private Set<RoleEnum> roles;
-
-
 
 
 }

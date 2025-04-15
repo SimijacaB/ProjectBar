@@ -5,7 +5,9 @@ import com.app.projectbar.domain.enums.RoleEnum;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -15,9 +17,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                .csrf().disable()
-                .cors().and()
-                .authorizeHttpRequests()
+                .authorizeHttpRequests( (authorize) -> authorize
                 // INGREDIENTES
                 .requestMatchers(HttpMethod.GET, "/api/ingredient/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.CHEF.name())
                 .requestMatchers(HttpMethod.PUT, "/api/ingredient/**").hasRole(RoleEnum.ADMIN.name())
@@ -42,9 +42,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/order/change-status/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
 
                 .anyRequest()
-                .authenticated()
-                .and()
-                .httpBasic();
+                .authenticated())
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .httpBasic(Customizer.withDefaults());
 
         return httpSecurity.build();
 
