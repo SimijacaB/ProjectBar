@@ -32,7 +32,7 @@ public class Order {
     private Double valueToPay;
 
     @Column(name = "waiter_id")
-    private String waiterId;
+    private String waiterUserName;
 
     private String notes;
 
