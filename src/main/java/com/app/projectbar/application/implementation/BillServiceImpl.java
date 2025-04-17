@@ -11,6 +11,7 @@
     import com.app.projectbar.infra.repositories.IProductRepository;
     import lombok.RequiredArgsConstructor;
     import org.modelmapper.ModelMapper;
+    import org.springframework.security.core.context.SecurityContextHolder;
     import org.springframework.stereotype.Service;
 
     import java.time.LocalDateTime;
@@ -61,7 +62,13 @@
 
         @Override
         public List<BillDTO> findAll() {
-            return List.of();
+            List<Bill> listBill = billRepository.findAll();
+            List<BillDTO> dtoList = new ArrayList<>();
+            for (Bill bill : listBill){
+                BillDTO dto = modelMapper.map(bill, BillDTO.class);
+                dtoList.add(dto);
+            }
+            return dtoList;
         }
 
         @Override
@@ -134,13 +141,15 @@
                 inventoryService.deductStock(quantity, code);
             }
 
+
+
             // Crear la factura
             Bill bill = Bill.builder()
                     .billingDate(LocalDateTime.now())
                     .orders(orders)
                     .billNumber(generateBillNumber())
                     .totalAmount(calculateTotalAmount(consolidatedItems))
-                    .createdBy("Sistema")
+                    .createdBy(SecurityContextHolder.getContext().getAuthentication().getName())
                     .build();
 
             return modelMapper.map(bill, BillDTO.class);

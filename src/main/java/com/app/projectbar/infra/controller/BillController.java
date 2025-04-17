@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/bill")
@@ -25,5 +27,10 @@ public class BillController {
     @Transactional
     public ResponseEntity<BillDTO> generateByClient(@PathVariable String clientName){
         return ResponseEntity.ok(billService.generateBillByClient(clientName));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<BillDTO>> findAll(){
+        return ResponseEntity.ok(billService.findAll());
     }
 }
