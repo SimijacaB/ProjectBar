@@ -24,11 +24,6 @@
         private final IBillRepository billRepository;
         private final IOrderRepository orderRepository;
         private final ModelMapper modelMapper;
-        private final IProductRepository productRepository;
-        private final OrderServiceImpl orderService;
-        private final InventoryServiceImpl inventoryService;
-
-
 
         @Override
         public BillDTO findById(Long id) {
@@ -41,7 +36,7 @@
         }
 
         @Override
-        public BillDTO findByNumber(Long number) {
+        public BillDTO findByNumber(String number) {
             Optional<Bill> billOptional = billRepository.findByBillNumber(number);
             if (billOptional.isPresent()) {
                 return modelMapper.map(billOptional.get(), BillDTO.class);
@@ -56,8 +51,12 @@
                order.getOrderItems().forEach(item -> item.setOrder(order)); // Relacionar los ítems con la orden
            });
            bill.setOrders(orders);
-           billRepository.save(bill);
-           return modelMapper.map(bill, BillDTO.class);
+           Bill savedBill = billRepository.save(bill);
+
+           String formattedBillNumber = String.format("FE-%06d", savedBill.getId());
+           savedBill.setBillNumber(formattedBillNumber);
+
+           return modelMapper.map(savedBill, BillDTO.class);
        }
 
         @Override
@@ -85,8 +84,8 @@
 
             billResponse.setClientName(clientName);
 
-            this.save(modelMapper.map(billResponse, Bill.class), ordersByTable);
-            return billResponse;
+            return this.save(modelMapper.map(billResponse, Bill.class), ordersByTable);
+
         }
 
 
@@ -98,9 +97,9 @@
 
             billResponse.setClientName(clientName);
 
-            this.save(modelMapper.map(billResponse, Bill.class), ordersByClientName);
+            return this.save(modelMapper.map(billResponse, Bill.class), ordersByClientName);
 
-            return billResponse;
+
         }
 
         @Override
@@ -110,7 +109,7 @@
 
 
         public BillDTO generateItemForBill(List<Order> orders) {
-//
+
             // Mapa que usa el ID del producto como clave
             Map<Long, OrderItem> productMap = new HashMap<>();
 
@@ -135,32 +134,16 @@
 
             List<OrderItem> consolidatedItems = new ArrayList<>(productMap.values());
 
-            for (OrderItem orderItem : consolidatedItems){
-                String code = orderItem.getProduct().getCode();
-                Integer quantity = orderItem.getQuantity();
-                inventoryService.deductStock(quantity, code);
-            }
-
-
-
             // Crear la factura
             Bill bill = Bill.builder()
                     .billingDate(LocalDateTime.now())
                     .orders(orders)
-                    .billNumber(generateBillNumber())
                     .totalAmount(calculateTotalAmount(consolidatedItems))
                     .createdBy(SecurityContextHolder.getContext().getAuthentication().getName())
                     .build();
 
             return modelMapper.map(bill, BillDTO.class);
-
         }
-
-
-        private Long generateBillNumber() {
-            return System.currentTimeMillis();
-        }
-
 
 
         private Double calculateTotalAmount(List<OrderItem> orderItems) {
