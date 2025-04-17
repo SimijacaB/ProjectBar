@@ -4,6 +4,7 @@ package com.app.projectbar.domain.dto.order;
 import com.app.projectbar.domain.OrderItem;
 import com.app.projectbar.domain.dto.orderItem.OrderItemResponseDTO;
 import com.app.projectbar.domain.enums.OrderStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,6 +31,7 @@ public class OrderResponseDTO {
 
     private OrderStatus status;
 
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime date;
 
     private List<OrderItemResponseDTO> orderItemList;

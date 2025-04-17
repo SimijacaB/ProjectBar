@@ -10,7 +10,7 @@ public interface IBillService {
 
     BillDTO findById(Long id);
 
-    BillDTO findByNumber(Long number);
+    BillDTO findByNumber(String number);
 
     List<BillDTO> findAll();
 

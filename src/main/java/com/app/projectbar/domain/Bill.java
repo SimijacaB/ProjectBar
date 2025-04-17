@@ -1,5 +1,6 @@
 package com.app.projectbar.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,8 +29,8 @@ public class Bill {
     @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders;
 
-    @Column(name = "bill_number")
-    private Long billNumber;
+    @Column(name = "bill_number", unique = true)
+    private String billNumber;
 
     @Column(name = "total_amount")
     private Double totalAmount;

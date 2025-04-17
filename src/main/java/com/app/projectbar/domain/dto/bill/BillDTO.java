@@ -1,6 +1,7 @@
 package com.app.projectbar.domain.dto.bill;
 
 import com.app.projectbar.domain.OrderItem;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,11 +18,12 @@ public class BillDTO {
 
     private String clientName;
 
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime billingDate;
 
     private List<OrderItem> items;
 
-    private Long billNumber;
+    private String billNumber;
 
     private Double totalAmount;
 

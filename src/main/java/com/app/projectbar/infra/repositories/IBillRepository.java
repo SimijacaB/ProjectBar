@@ -9,7 +9,7 @@ import java.util.Optional;
 @Repository
 public interface IBillRepository extends JpaRepository<Bill, Long> {
 
-    Optional<Bill> findByBillNumber(Long number);
+    Optional<Bill> findByBillNumber(String number);
 
 
 }

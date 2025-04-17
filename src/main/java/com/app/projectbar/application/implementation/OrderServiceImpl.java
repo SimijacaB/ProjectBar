@@ -1,5 +1,6 @@
 package com.app.projectbar.application.implementation;
 
+import com.app.projectbar.application.interfaces.IInventoryService;
 import com.app.projectbar.application.interfaces.IOrderService;
 import com.app.projectbar.domain.*;
 import com.app.projectbar.domain.dto.order.OrderForListResponseDTO;
@@ -28,10 +29,10 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements IOrderService {
 
     private final IOrderRepository orderRepository;
-    private final IOrderItemRepository orderItemRepository;
     private final ModelMapper modelMapper;
     private final IProductRepository productRepository;
-    private final IInventoryRepository inventoryRepository;
+    private final IInventoryService inventoryService;
+
 
     @Override
     public OrderResponseDTO save(OrderRequestDTO orderRequest) {
@@ -43,7 +44,7 @@ public class OrderServiceImpl implements IOrderService {
         String waiterId = SecurityContextHolder.getContext().getAuthentication().getName();
 
         Order newOrder = modelMapper.map(orderRequest, Order.class);
-        newOrder.setWaiterId(waiterId);
+        newOrder.setWaiterUserName(waiterId);
         newOrder = orderRepository.save(newOrder);
         return modelMapper.map(newOrder, OrderResponseDTO.class);
     }
@@ -110,7 +111,7 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public List<OrderForListResponseDTO> findByWaiterId(String id) {
-        List<Order> orders = orderRepository.findByWaiterId(id);
+        List<Order> orders = orderRepository.findByWaiterUserName(id);
         return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
     }
 
@@ -170,8 +171,12 @@ public class OrderServiceImpl implements IOrderService {
         // 7. Guardar la orden actualizada
         Order updatedOrder = orderRepository.save(order);
 
-        // 8. Convertir la orden a DTO y retornarla
-        return modelMapper.map(updatedOrder, OrderResponseDTO.class);
+        List<OrderItemResponseDTO> orderItemDTOs = getOrderItemResponse(updatedOrder);
+
+        // 8. Mapear la orden a OrderResponseDTO e incluir la lista de OrderItemResponseDTO
+        OrderResponseDTO responseDTO = modelMapper.map(updatedOrder, OrderResponseDTO.class);
+        responseDTO.setOrderItemList(orderItemDTOs);
+        return responseDTO;
     }
 
     @Override
@@ -191,7 +196,15 @@ public class OrderServiceImpl implements IOrderService {
         order.getOrderItems().remove(modelMapper.map(orderItem, OrderItem.class));
         order.setOrderItems(order.getOrderItems());
 
-        return modelMapper.map(orderRepository.save(order), OrderResponseDTO.class);
+        // 7. Guardar la orden actualizada
+        Order updatedOrder = orderRepository.save(order);
+
+        List<OrderItemResponseDTO> orderItemDTOs = getOrderItemResponse(updatedOrder);
+
+        // 8. Mapear la orden a OrderResponseDTO e incluir la lista de OrderItemResponseDTO
+        OrderResponseDTO responseDTO = modelMapper.map(updatedOrder, OrderResponseDTO.class);
+        responseDTO.setOrderItemList(orderItemDTOs);
+        return responseDTO;
 
     }
 
@@ -203,10 +216,10 @@ public class OrderServiceImpl implements IOrderService {
         }
         Order order = orderOptional.get();
 
-        // Solo entra aquí si el estado a cambiar es "READY"
-        if (newStatus.equals(OrderStatus.READY.toString())) {
+        // Solo entra aquí si el estado a cambiar es "DELIVERED"
+        if (newStatus.equals(OrderStatus.DELIVERED.toString())) {
             for (OrderItem item : order.getOrderItems()) {
-                deductInventory(item);
+                inventoryService.deductStock(item.getQuantity(), item.getProduct().getCode());
             }
         }
 
@@ -216,33 +229,46 @@ public class OrderServiceImpl implements IOrderService {
         return modelMapper.map(orderRepository.save(order), OrderResponseDTO.class);
     }
 
-    // Método privado para deducir inventario
-    private void deductInventory(OrderItem orderItem) {
-        String code = productRepository.findByName(orderItem.getProductName())
-                .stream().findFirst().get().get(0).getCode();
 
-        Product product = productRepository.findByCode(code).get();
-        if (!product.getIsPrepared()) {
-            Optional<Inventory> inventory = inventoryRepository.findByCode(code);
+    private List<OrderItemResponseDTO> getOrderItemResponse(Order updatedOrder){
+        // 7. Mapear la lista de OrderItems a OrderItemResponseDTO
+        List<OrderItemResponseDTO> orderItemDTOs = updatedOrder.getOrderItems().stream()
+                .map(orderItem -> OrderItemResponseDTO.builder()
+                        .id(orderItem.getId())
+                        .productName(orderItem.getProduct().getName())
+                        .quantity(orderItem.getQuantity())
+                        .build())
+                .collect(Collectors.toList());
 
-            if (inventory.isEmpty()) {
-                throw new RuntimeException("Product with id " + code + " not found");
-            }
-
-            inventory.get().setQuantity(inventory.get().getQuantity() - orderItem.getQuantity());
-            inventoryRepository.save(inventory.get());
-        } else {
-            for (ProductIngredient productIngredient : product.getProductIngredients()) {
-                Optional<Inventory> inventory = inventoryRepository.findByCode(productIngredient.getIngredient().getCode());
-
-                if (inventory.isEmpty()) {
-                    throw new RuntimeException("Ingredient with id " + code + " not found");
-                }
-                inventory.get().setQuantity((int) (inventory.get().getQuantity() -
-                        (orderItem.getQuantity() * productIngredient.getAmount())));
-                inventoryRepository.save(inventory.get());
-            }
-        }
+        return orderItemDTOs;
     }
 
+//    // Mapper
+//    private OrderResponseDTO toOrderResponseDTO(Order order) {
+//        return OrderResponseDTO.builder()
+//                .id(order.getId())
+//                .clientName(order.getClientName())
+//                .tableNumber(order.getTableNumber())
+//                .waiterUserName(order.getWaiterUserName())
+//                .notes(order.getNotes())
+//                .status(order.getStatus())
+//                .date(order.getDate())
+//                .valueToPay(order.getValueToPay())
+//                .orderItemList(order.getOrderItems() != null ?
+//                        order.getOrderItems().stream()
+//                                .map(this::toOrderItemResponseDTO)
+//                                .collect(Collectors.toList()) : null)
+//                .build();
+//    }
+//
+//    private OrderItemResponseDTO toOrderItemResponseDTO(OrderItem item) {
+//        return OrderItemResponseDTO.builder()
+//                .id(item.getId())
+//                .productName(item.getProductName())
+//                .quantity(item.getQuantity())
+//                .build();
+//    }
 }
+
+
+
