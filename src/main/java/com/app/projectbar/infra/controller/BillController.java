@@ -31,6 +31,7 @@ public class BillController {
     }
 
     @PostMapping("/save/by-selection")
+    @Transactional
     public ResponseEntity<BillDTO> generateBySelection(@RequestBody OrdersForBillDto requestDto){
         return ResponseEntity.ok(billService.generateBillBySelection(requestDto.getOrdersId()));
     }

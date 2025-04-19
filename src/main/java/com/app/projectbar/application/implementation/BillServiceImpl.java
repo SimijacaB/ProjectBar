@@ -112,8 +112,7 @@
             BillDTO billResponse = generateItemForBill(selectedOrders);
             billResponse.setClientName(selectedOrders.get(0).getClientName());
 
-            this.save(modelMapper.map(billResponse, Bill.class), selectedOrders);
-            return billResponse;
+            return this.save(modelMapper.map(billResponse, Bill.class), selectedOrders);
         }
 
 
