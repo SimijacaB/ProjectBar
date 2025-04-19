@@ -104,7 +104,16 @@
 
         @Override
         public BillDTO generateBillBySelection(List<Long> orderIds) {
-            return null;
+            List<Order> selectedOrders = new ArrayList<>();
+            for (Long id : orderIds){
+                selectedOrders.add(orderRepository.findById(id).get());
+            }
+
+            BillDTO billResponse = generateItemForBill(selectedOrders);
+            billResponse.setClientName(selectedOrders.get(0).getClientName());
+
+            this.save(modelMapper.map(billResponse, Bill.class), selectedOrders);
+            return billResponse;
         }
 
 

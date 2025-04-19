@@ -2,6 +2,7 @@ package com.app.projectbar.infra.controller;
 
 import com.app.projectbar.application.interfaces.IBillService;
 import com.app.projectbar.domain.dto.bill.BillDTO;
+import com.app.projectbar.domain.dto.bill.OrdersForBillDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,11 @@ public class BillController {
     @Transactional
     public ResponseEntity<BillDTO> generateByClient(@PathVariable String clientName){
         return ResponseEntity.ok(billService.generateBillByClient(clientName));
+    }
+
+    @PostMapping("/save/by-selection")
+    public ResponseEntity<BillDTO> generateBySelection(@RequestBody OrdersForBillDto requestDto){
+        return ResponseEntity.ok(billService.generateBillBySelection(requestDto.getOrdersId()));
     }
 
     @GetMapping("/all")
