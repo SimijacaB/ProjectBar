@@ -1,7 +1,7 @@
 package com.app.projectbar.application.exception;
 
 public class OrdersAlreadyBilledException extends RuntimeException {
-  public OrdersAlreadyBilledException(String message) {
-    super(message);
-  }
+    public OrdersAlreadyBilledException(String message) {
+        super(message);
+    }
 }

@@ -1,6 +1,7 @@
 package com.app.projectbar.application.interfaces;
 
 
+import com.app.projectbar.domain.Order;
 import com.app.projectbar.domain.enums.OrderStatus;
 import com.app.projectbar.domain.dto.order.OrderForListResponseDTO;
 import com.app.projectbar.domain.dto.order.OrderRequestDTO;
@@ -38,7 +39,11 @@ public interface IOrderService {
 
     OrderResponseDTO changeStatus(Long id, String newStatus);
 
-   // Double calculateValueToPay(OrderRequestDTO orderRequestDTO);
+    void setOrdersAsReady(List<Order> orders);
+
+    void validateIfOrderCanBeBilled(List<Order> orders);
+
+    List<Order> getExistingOrdersOrThrow(List<Long> orderIds);
 
 
 }

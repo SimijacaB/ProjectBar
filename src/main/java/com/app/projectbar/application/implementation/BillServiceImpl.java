@@ -1,11 +1,13 @@
     package com.app.projectbar.application.implementation;
 
     import com.app.projectbar.application.interfaces.IBillService;
+    import com.app.projectbar.application.interfaces.IOrderService;
     import com.app.projectbar.domain.Bill;
     import com.app.projectbar.domain.Order;
     import com.app.projectbar.domain.OrderItem;
     import com.app.projectbar.domain.Product;
     import com.app.projectbar.domain.dto.bill.BillDTO;
+    import com.app.projectbar.domain.enums.OrderStatus;
     import com.app.projectbar.infra.repositories.IBillRepository;
     import com.app.projectbar.infra.repositories.IOrderRepository;
     import com.app.projectbar.infra.repositories.IProductRepository;
@@ -16,6 +18,7 @@
 
     import java.time.LocalDateTime;
     import java.util.*;
+    import java.util.stream.Collectors;
 
     @Service
     @RequiredArgsConstructor
@@ -24,6 +27,7 @@
         private final IBillRepository billRepository;
         private final IOrderRepository orderRepository;
         private final ModelMapper modelMapper;
+        private final IOrderService orderService;
 
         @Override
         public BillDTO findById(Long id) {
@@ -80,6 +84,17 @@
 
             List<Order> ordersByTable = orderRepository.findByTableNumber(tableNumber);
 
+            List<Long> orderIds = ordersByTable.stream().map(order -> order.getId()).toList();
+
+            // Aquí valido que las ordenes existan
+            List<Order> selectedOrders = orderService.getExistingOrdersOrThrow(orderIds);
+
+            // Aquí valido si las ordenes ya están facturadas
+            orderService.validateIfOrderCanBeBilled(selectedOrders);
+
+            // Aquí las setteo todas a READY
+            orderService.setOrdersAsReady(selectedOrders);
+
             BillDTO billResponse = generateItemForBill(ordersByTable);
 
             billResponse.setClientName(clientName);
@@ -93,6 +108,17 @@
         public BillDTO generateBillByClient(String clientName) {
             List<Order> ordersByClientName = orderRepository.findByClientName(clientName);
 
+            List<Long> orderIds = ordersByClientName.stream().map(order -> order.getId()).toList();
+
+            // Aquí valido que las ordenes existan
+            List<Order> selectedOrders = orderService.getExistingOrdersOrThrow(orderIds);
+
+            // Aquí valido si las ordenes ya están facturadas
+            orderService.validateIfOrderCanBeBilled(selectedOrders);
+
+            // Aquí las setteo todas a READY
+            orderService.setOrdersAsReady(selectedOrders);
+
             BillDTO billResponse = generateItemForBill(ordersByClientName);
 
             billResponse.setClientName(clientName);
@@ -104,10 +130,14 @@
 
         @Override
         public BillDTO generateBillBySelection(List<Long> orderIds) {
-            List<Order> selectedOrders = new ArrayList<>();
-            for (Long id : orderIds){
-                selectedOrders.add(orderRepository.findById(id).get());
-            }
+            // Aquí valido que las ordenes existan
+            List<Order> selectedOrders = orderService.getExistingOrdersOrThrow(orderIds);
+
+            // Aquí valido si las ordenes ya están facturadas
+            orderService.validateIfOrderCanBeBilled(selectedOrders);
+
+            // Aquí las setteo todas a READY
+            orderService.setOrdersAsReady(selectedOrders);
 
             BillDTO billResponse = generateItemForBill(selectedOrders);
             billResponse.setClientName(selectedOrders.get(0).getClientName());
@@ -159,4 +189,10 @@
                     .mapToDouble(item -> item.getPrice() * item.getQuantity())
                     .sum();
         }
+
+
+
+
+
+
     }

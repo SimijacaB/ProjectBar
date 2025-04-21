@@ -1,5 +1,7 @@
 package com.app.projectbar.application.implementation;
 
+import com.app.projectbar.application.exception.ErrorMessagesService;
+import com.app.projectbar.application.exception.OrdersAlreadyBilledException;
 import com.app.projectbar.application.interfaces.IInventoryService;
 import com.app.projectbar.application.interfaces.IOrderService;
 import com.app.projectbar.domain.*;
@@ -20,6 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -243,31 +246,53 @@ public class OrderServiceImpl implements IOrderService {
         return orderItemDTOs;
     }
 
-//    // Mapper
-//    private OrderResponseDTO toOrderResponseDTO(Order order) {
-//        return OrderResponseDTO.builder()
-//                .id(order.getId())
-//                .clientName(order.getClientName())
-//                .tableNumber(order.getTableNumber())
-//                .waiterUserName(order.getWaiterUserName())
-//                .notes(order.getNotes())
-//                .status(order.getStatus())
-//                .date(order.getDate())
-//                .valueToPay(order.getValueToPay())
-//                .orderItemList(order.getOrderItems() != null ?
-//                        order.getOrderItems().stream()
-//                                .map(this::toOrderItemResponseDTO)
-//                                .collect(Collectors.toList()) : null)
-//                .build();
-//    }
-//
-//    private OrderItemResponseDTO toOrderItemResponseDTO(OrderItem item) {
-//        return OrderItemResponseDTO.builder()
-//                .id(item.getId())
-//                .productName(item.getProductName())
-//                .quantity(item.getQuantity())
-//                .build();
-//    }
+    // Método que se encargará de validar si todas las ordenes que se van a facturar, no están ya facturadas
+    public void validateIfOrderCanBeBilled(List<Order> orders) {
+
+        List<Long> alreadyBilledOrderIds = orders.stream()
+                .filter(order -> order.getStatus() == OrderStatus.READY)
+                .map(Order::getId)
+                .toList();
+
+        if(!alreadyBilledOrderIds.isEmpty()){
+            String ids = alreadyBilledOrderIds.stream()
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(", "));
+            throw new OrdersAlreadyBilledException(ErrorMessagesService.ORDER_ALREADY_BILLED_EXCEPTION + ids);
+        }
+    }
+
+    // Metodo que se encargará de settear el OrderStatus de la Orders que se vayan a facturar a READY
+    public void setOrdersAsReady(List<Order> orders){
+        for (Order order : orders){
+            order.setStatus(OrderStatus.READY);
+        }
+        orderRepository.saveAll(orders);
+    }
+
+    // Este metodo se encarga de comprobar que las ordenes a facturar, existan
+    public List<Order> getExistingOrdersOrThrow(List<Long> orderIds) {
+        List<Order> existingOrders = new ArrayList<>();
+        List<Long> notFoundIds = new ArrayList<>();
+
+        for (Long id : orderIds) {
+            Optional<Order> maybeOrder = orderRepository.findById(id);
+            if (maybeOrder.isPresent()) {
+                existingOrders.add(maybeOrder.get());
+            } else {
+                notFoundIds.add(id);
+            }
+        }
+
+        if (!notFoundIds.isEmpty()) {
+            throw new RuntimeException("The following Order IDs do not exist: " + notFoundIds);
+        }
+
+        return existingOrders;
+    }
+
+
+
 }
 
 
