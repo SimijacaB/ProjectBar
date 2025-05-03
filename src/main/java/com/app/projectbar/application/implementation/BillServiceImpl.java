@@ -1,5 +1,8 @@
     package com.app.projectbar.application.implementation;
 
+    import com.app.projectbar.application.exception.ErrorMessagesService;
+    import com.app.projectbar.application.exception.bill.BillNotFoundByIdException;
+    import com.app.projectbar.application.exception.bill.BillNotFoundByNumberException;
     import com.app.projectbar.application.interfaces.IBillService;
     import com.app.projectbar.application.interfaces.IOrderService;
     import com.app.projectbar.domain.Bill;
@@ -33,7 +36,7 @@
         public BillDTO findById(Long id) {
             Optional<Bill> billOptional = billRepository.findById(id);
             if (!billOptional.isPresent()) {
-                throw new RuntimeException("No bill found with id: " + id);
+                throw new BillNotFoundByIdException(ErrorMessagesService.BILL_NOT_FOUND_BY_ID_EXCEPTION.getMessage());
             }
             BillDTO result = modelMapper.map(billOptional.get(), BillDTO.class);
             return result;
@@ -45,7 +48,7 @@
             if (billOptional.isPresent()) {
                 return modelMapper.map(billOptional.get(), BillDTO.class);
             } else {
-                throw new RuntimeException("No bill found with number: " + number);
+                throw new BillNotFoundByNumberException(ErrorMessagesService.BILL_NOT_FOUND_BY_NUMBER_EXCEPTION.getMessage());
             }
         }
 

@@ -1,7 +1,9 @@
 package com.app.projectbar.application.implementation;
 
 import com.app.projectbar.application.exception.ErrorMessagesService;
-import com.app.projectbar.application.exception.OrdersAlreadyBilledException;
+import com.app.projectbar.application.exception.orders.OrderNotFoundByIdException;
+import com.app.projectbar.application.exception.orders.OrdersAlreadyBilledException;
+import com.app.projectbar.application.exception.orders.OrdersNotFoundByStatusException;
 import com.app.projectbar.application.interfaces.IInventoryService;
 import com.app.projectbar.application.interfaces.IOrderService;
 import com.app.projectbar.domain.*;
@@ -12,8 +14,6 @@ import com.app.projectbar.domain.dto.order.UpdateOrderDTO;
 import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
 import com.app.projectbar.domain.dto.orderItem.OrderItemResponseDTO;
 import com.app.projectbar.domain.enums.OrderStatus;
-import com.app.projectbar.infra.repositories.IInventoryRepository;
-import com.app.projectbar.infra.repositories.IOrderItemRepository;
 import com.app.projectbar.infra.repositories.IOrderRepository;
 import com.app.projectbar.infra.repositories.IProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +62,7 @@ public class OrderServiceImpl implements IOrderService {
     @Override
     public OrderResponseDTO findById(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order with id " + id + " not found"));
+                .orElseThrow(() -> new OrderNotFoundByIdException(ErrorMessagesService.ORDER_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
 
         //Se mapea la lista de orderItems y se cambia la lista de OrderResponse de OrderItem a OrderItemResponseDTO
 
@@ -84,7 +84,7 @@ public class OrderServiceImpl implements IOrderService {
     @Override
     public OrderResponseDTO updateOrder(UpdateOrderDTO updateOrderDTO) {
         var order = orderRepository.findById(updateOrderDTO.getId())
-                .orElseThrow(() -> new RuntimeException("Order with id " + updateOrderDTO.getId() + " not found"));
+                .orElseThrow(() -> new OrderNotFoundByIdException(ErrorMessagesService.ORDER_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
 
         order.setClientName(updateOrderDTO.getClientName());
         order.setTableNumber(updateOrderDTO.getTableNumber());
@@ -125,7 +125,11 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public List<OrderForListResponseDTO> findByStatus(OrderStatus status) {
-        return null;
+        List<Order> orders = orderRepository.findByStatus(status);
+        if(orders.isEmpty()){
+            throw new OrdersNotFoundByStatusException(ErrorMessagesService.ORDERS_NOT_FOUND_BY_STATUS_EXCEPTION.getMessage());
+        }
+        return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
     }
 
     @Override
