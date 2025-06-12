@@ -43,7 +43,7 @@ public class OrderServiceImpl implements IOrderService {
         //Se intenta obtener el usuario autenticado que crea la order, hay que tener en
         // cuenta que los demás usuarios que estén autenticados pueden agregar orderItems
         // a la order, los lo tanto, para nuestra lógica podemos considerar que solo el mesero
-        // que la creo pueda agregar mas orderItems.
+        // que la creo pueda agregar más orderItems.
         String waiterId = SecurityContextHolder.getContext().getAuthentication().getName();
 
         Order newOrder = modelMapper.map(orderRequest, Order.class);
@@ -196,7 +196,7 @@ public class OrderServiceImpl implements IOrderService {
 
         OrderItem orderItem = order.getOrderItems()
                 .stream()
-                .filter(findOrderItem -> findOrderItem.getId() == idOrderItem)
+                .filter(findOrderItem -> findOrderItem.getId().equals(idOrderItem))
                 .findFirst().get();
 
 
@@ -239,15 +239,14 @@ public class OrderServiceImpl implements IOrderService {
 
     private List<OrderItemResponseDTO> getOrderItemResponse(Order updatedOrder){
         // 7. Mapear la lista de OrderItems a OrderItemResponseDTO
-        List<OrderItemResponseDTO> orderItemDTOs = updatedOrder.getOrderItems().stream()
+
+        return updatedOrder.getOrderItems().stream()
                 .map(orderItem -> OrderItemResponseDTO.builder()
                         .id(orderItem.getId())
                         .productName(orderItem.getProduct().getName())
                         .quantity(orderItem.getQuantity())
                         .build())
                 .collect(Collectors.toList());
-
-        return orderItemDTOs;
     }
 
     // Método que se encargará de validar si todas las ordenes que se van a facturar, no están ya facturadas
@@ -266,7 +265,7 @@ public class OrderServiceImpl implements IOrderService {
         }
     }
 
-    // Metodo que se encargará de settear el OrderStatus de la Orders que se vayan a facturar a READY
+    // método que se encargará de settear el OrderStatus de la Orders que se vayan a facturar a READY
     public void setOrdersAsReady(List<Order> orders){
         for (Order order : orders){
             order.setStatus(OrderStatus.READY);
@@ -274,7 +273,7 @@ public class OrderServiceImpl implements IOrderService {
         orderRepository.saveAll(orders);
     }
 
-    // Este metodo se encarga de comprobar que las ordenes a facturar, existan
+    // Este método se encarga de comprobar que las ordenes a facturar, existan
     public List<Order> getExistingOrdersOrThrow(List<Long> orderIds) {
         List<Order> existingOrders = new ArrayList<>();
         List<Long> notFoundIds = new ArrayList<>();
@@ -294,9 +293,6 @@ public class OrderServiceImpl implements IOrderService {
 
         return existingOrders;
     }
-
-
-
 }
 
 

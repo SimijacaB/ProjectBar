@@ -9,7 +9,6 @@ import java.util.Optional;
 @Repository
 public interface IIngredientRepository extends JpaRepository<Ingredient, Long> {
 
-        Optional<Ingredient> findByName(String name);
         Optional<Ingredient> findByCode(String code);
 
         void deleteByCode(String code);

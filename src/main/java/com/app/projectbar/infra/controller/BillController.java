@@ -4,7 +4,6 @@ import com.app.projectbar.application.interfaces.IBillService;
 import com.app.projectbar.domain.dto.bill.BillDTO;
 import com.app.projectbar.domain.dto.bill.OrdersForBillDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;

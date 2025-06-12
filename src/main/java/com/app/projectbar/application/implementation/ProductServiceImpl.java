@@ -7,7 +7,6 @@ import com.app.projectbar.domain.dto.product.ProductForListResponseDTO;
 import com.app.projectbar.domain.dto.product.ProductRequestDTO;
 import com.app.projectbar.domain.dto.product.ProductResponseDTO;
 import com.app.projectbar.domain.dto.product.UpdateProductRequestDTO;
-import com.app.projectbar.infra.repositories.IProductIngredientRepository;
 import com.app.projectbar.domain.enums.Category;
 import com.app.projectbar.domain.Product;
 import com.app.projectbar.infra.repositories.IProductRepository;
@@ -15,9 +14,7 @@ import com.app.projectbar.infra.repositories.IIngredientRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +22,6 @@ public class ProductServiceImpl implements IProductService {
 
     private final IProductRepository productRepository;
     private final IIngredientRepository ingredientRepository;
-    private final IProductIngredientRepository productIngredientRepository;
     private final ModelMapper modelMapper;
 
     @Override

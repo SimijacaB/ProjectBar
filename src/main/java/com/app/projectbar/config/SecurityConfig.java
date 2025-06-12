@@ -1,6 +1,5 @@
 package com.app.projectbar.config;
 
-import com.app.projectbar.domain.enums.Permission;
 import com.app.projectbar.domain.enums.RoleEnum;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
