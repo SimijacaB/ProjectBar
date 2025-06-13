@@ -40,6 +40,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/order/remove-order-item/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.WAITER.name())
                 .requestMatchers(HttpMethod.PUT, "/api/order/change-status/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
 
+                //BILL
+                .requestMatchers(HttpMethod.GET, "/api/bill/download-pdf/").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
+
                 .anyRequest()
                 .authenticated())
                 .csrf(AbstractHttpConfigurer::disable)

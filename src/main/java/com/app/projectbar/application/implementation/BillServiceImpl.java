@@ -10,13 +10,26 @@ import com.app.projectbar.domain.Bill;
 import com.app.projectbar.domain.Order;
 import com.app.projectbar.domain.OrderItem;
 import com.app.projectbar.domain.dto.bill.BillDTO;
+import com.app.projectbar.domain.dto.bill.BillReportDTO;
+import com.app.projectbar.domain.dto.orderItem.ItemReportDTO;
 import com.app.projectbar.infra.repositories.IBillRepository;
 import com.app.projectbar.infra.repositories.IOrderRepository;
 import lombok.RequiredArgsConstructor;
+import net.sf.jasperreports.engine.JREmptyDataSource;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import net.sf.jasperreports.engine.export.JRPdfExporter;
+import net.sf.jasperreports.export.SimpleExporterInput;
+import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
+import net.sf.jasperreports.export.SimplePdfExporterConfiguration;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -189,7 +202,103 @@ public class BillServiceImpl implements IBillService, IBillReportService
 
     @Override
     public byte[] generateBillPDF(Long billId) {
-        
-        return new byte[0];
+
+        try {
+            // 1. Obtener los datos de la factura
+            BillDTO billDTO = findById(billId); // Reutilizamos el método existente
+            Bill bill = modelMapper.map(billDTO, Bill.class); // Convertimos a entidad si es necesario para acceder a la lista de Orders
+
+            // Consolidar los ítems para el reporte, similar a generateItemForBill
+            Map<Long, ItemReportDTO> productMap = new HashMap<>();
+            double totalCalculated = 0.0; // Recalcular el total aquí para asegurar coherencia
+
+            if (bill.getOrders() != null) {
+                for (Order order : bill.getOrders()) {
+                    if (order.getOrderItems() != null) {
+                        for (OrderItem item : order.getOrderItems()) {
+                            Long productId = item.getProduct().getId();
+                            double itemSubtotal = item.getQuantity() * item.getProduct().getPrice();
+
+                            if (productMap.containsKey(productId)) {
+                                ItemReportDTO existingItem = productMap.get(productId);
+                                existingItem.setQuantity(existingItem.getQuantity() + item.getQuantity());
+                                existingItem.setSubtotal(existingItem.getSubtotal() + itemSubtotal);
+                            } else {
+                                ItemReportDTO newItem = ItemReportDTO.builder()
+                                        .productName(item.getProduct().getName()) // Asegúrate de que Product tenga un 'name'
+                                        .quantity(item.getQuantity())
+                                        .price(item.getProduct().getPrice())
+                                        .subtotal(itemSubtotal)
+                                        .build();
+                                productMap.put(productId, newItem);
+                            }
+                            totalCalculated += itemSubtotal;
+                        }
+                    }
+                }
+            }
+
+
+            // 2. Crear el DTO de reporte
+            List<ItemReportDTO> itemsReport = new ArrayList<>(productMap.values());
+
+            BillReportDTO reportData = BillReportDTO.builder()
+                    .id(bill.getId())
+                    .billNumber(bill.getBillNumber())
+                    .clientName(bill.getClientName())
+                    .billingDate(bill.getBillingDate())
+                    .totalAmount(totalCalculated) // Usar el total calculado
+                    .createdBy(bill.getCreatedBy())
+                    .items(itemsReport) // Lista de ítems consolidados
+                    .build();
+
+            // 3. Cargar la plantilla compilada (.jasper)
+            // Asegúrate de que invoice_bill.jasper esté en src/main/resources/reports/
+            InputStream reportStream = getClass().getResourceAsStream("/reports/invoice_bill.jasper");
+            if (reportStream == null) {
+                throw new JRException("El archivo invoice_bill.jasper no se encontró en src/main/resources/reports/");
+            }
+
+            // 4. Preparar los parámetros del reporte
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("billNumber", reportData.getBillNumber());
+            parameters.put("clientName", reportData.getClientName());
+            parameters.put("billingDate", reportData.getBillingDate());
+            parameters.put("totalAmount", reportData.getTotalAmount());
+            parameters.put("createdBy", reportData.getCreatedBy());
+
+            // DataSource para los ítems de la factura (lista de ItemReportDTO)
+            JRBeanCollectionDataSource itemsDataSource = new JRBeanCollectionDataSource(reportData.getItems());
+            parameters.put("itemsDataSource", itemsDataSource); // Este es el nombre del parámetro JRDataSource en tu reporte
+
+            // 5. Llenar el reporte
+            JasperPrint jasperPrint = JasperFillManager.fillReport(reportStream, parameters, new JREmptyDataSource());
+            // Se usa JREmptyDataSource aquí porque los datos principales (de la factura) se pasan como parámetros
+            // y la lista de ítems se pasa como un JRDataSource separado para un sub reporte o tabla.
+
+
+            // 6. Exportar a PDF
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            JRPdfExporter exporter = new JRPdfExporter();
+            exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+            exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(outputStream));
+
+            SimplePdfExporterConfiguration configuration = new SimplePdfExporterConfiguration();
+            exporter.setConfiguration(configuration);
+
+            exporter.exportReport();
+
+            return outputStream.toByteArray();
+
+        } catch (JRException e) {
+            // Manejo de errores de JasperReports
+            e.printStackTrace();
+            throw new RuntimeException("Error al generar el PDF de la factura: " + e.getMessage(), e);
+        } catch (Exception e) {
+            // Otros errores
+            e.printStackTrace();
+            throw new RuntimeException("Error inesperado al generar el PDF de la factura: " + e.getMessage(), e);
+        }
+
     }
 }
