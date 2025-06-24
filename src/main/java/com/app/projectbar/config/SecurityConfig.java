@@ -41,7 +41,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/order/change-status/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
 
                 //BILL
-                .requestMatchers(HttpMethod.GET, "/api/bill/download-pdf/").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
+                .requestMatchers("/api/bill/**").permitAll()
+
+                // SWAGGER
+                .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
 
                 .anyRequest()
                 .authenticated())
@@ -59,4 +62,3 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-
