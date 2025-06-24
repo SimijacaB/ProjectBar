@@ -45,23 +45,25 @@ public class BillController {
         return ResponseEntity.ok(billService.findAll());
     }
 
-    @GetMapping("/download-pdf/{billId}")
+
+
+    @GetMapping(value = "/download-pdf/{billId}", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<byte[]> downloadBillPdf(@PathVariable Long billId) {
         try {
-            byte[] pdfBytes = billReportService.generateBillPDF(billId); // Llamar al método de reporte
+            byte[] pdfBytes = billReportService.generateBillPDF(billId);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentLength(pdfBytes.length);
+
             String filename = "factura_" + billId + ".pdf";
-            headers.setContentDispositionFormData("inline", filename); // Para mostrar en el navegador, usa "inline"
-            headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+            headers.setContentDispositionFormData("attachment", filename);
 
             return ResponseEntity.ok()
                     .headers(headers)
                     .body(pdfBytes);
         } catch (Exception e) {
-            // Manejo de errores
-            return ResponseEntity.status(500).body(null);
+            throw new RuntimeException("Error generating PDF: " + e.getMessage(), e);
         }
     }
 }
