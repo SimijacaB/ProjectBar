@@ -13,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class BillReportDTO {
+
     private Long id;
     private String clientName;
     private LocalDateTime billingDate;

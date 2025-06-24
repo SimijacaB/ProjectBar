@@ -1,4 +1,3 @@
-
 server:
   port: 8090
 
@@ -25,5 +24,13 @@ security:
     secret-key: 3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
     expiration-time: 3600000
 
-
-
+logging:
+  level:
+    root: INFO
+    com.app.projectbar: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate: ERROR
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/application.log

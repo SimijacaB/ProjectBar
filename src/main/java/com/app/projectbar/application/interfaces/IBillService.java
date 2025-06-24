@@ -1,7 +1,5 @@
 package com.app.projectbar.application.interfaces;
 
-import com.app.projectbar.domain.Bill;
-import com.app.projectbar.domain.Order;
 import com.app.projectbar.domain.dto.bill.BillDTO;
 
 import java.util.List;

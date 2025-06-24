@@ -39,11 +39,13 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public OrderResponseDTO save(OrderRequestDTO orderRequest) {
+        /*
+        Se intenta obtener el usuario autenticado que crea la order, hay que tener en
+        cuenta que los demás usuarios que estén autenticados pueden agregar orderItems
+        a la order, por lo tanto, para nuestra lógica podemos considerar que solo el mesero
+        que la creo pueda agregar más orderItems.
+         */
 
-        //Se intenta obtener el usuario autenticado que crea la order, hay que tener en
-        // cuenta que los demás usuarios que estén autenticados pueden agregar orderItems
-        // a la order, los lo tanto, para nuestra lógica podemos considerar que solo el mesero
-        // que la creo pueda agregar más orderItems.
         String waiterId = SecurityContextHolder.getContext().getAuthentication().getName();
 
         Order newOrder = modelMapper.map(orderRequest, Order.class);
