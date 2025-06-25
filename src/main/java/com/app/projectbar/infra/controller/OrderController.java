@@ -30,7 +30,6 @@ public class OrderController {
     public ResponseEntity<List<OrderForListResponseDTO>> findAll(){
         return ResponseEntity.ok(orderService.findAll());
     }
-
     @PutMapping("/update")
     @Transactional
     public ResponseEntity<OrderResponseDTO> update(@RequestBody @Valid UpdateOrderDTO updateOrderDTO){
@@ -58,6 +57,13 @@ public class OrderController {
     @Transactional
     public ResponseEntity<OrderResponseDTO> changeStatusOrder( @PathVariable Long idOrder, @PathVariable String status){
         return ResponseEntity.ok(orderService.changeStatus(idOrder, status));
+    }
+
+    @DeleteMapping("/delete/{id}")
+    @Transactional
+    public ResponseEntity <?> delete(@PathVariable Long id){
+        orderService.deleteOrder(id);
+        return ResponseEntity.ok().build();
     }
 
 
