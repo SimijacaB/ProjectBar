@@ -26,6 +26,7 @@ public class OrderController {
     public ResponseEntity<OrderResponseDTO> save(@RequestBody @Valid OrderRequestDTO orderRequestDTO){
         return ResponseEntity.ok(orderService.save(orderRequestDTO));
     }
+
     @GetMapping("/all")
     public ResponseEntity<List<OrderForListResponseDTO>> findAll(){
         return ResponseEntity.ok(orderService.findAll());
@@ -47,10 +48,10 @@ public class OrderController {
         return ResponseEntity.ok(orderService.addOrderItem(idOrder, itemRequestDTO));
     }
 
-    @PutMapping("/remove-order-item/{idOrder}/{idOrderItem}")
+    @PutMapping("/remove-order-item/{idOrder}/{idOrderItem}/{quantityToRemove}")
     @Transactional
-    public ResponseEntity<OrderResponseDTO> removeOrderItem( @PathVariable Long idOrder, @PathVariable Long idOrderItem){
-        return ResponseEntity.ok(orderService.removeOrderItem(idOrder, idOrderItem));
+    public ResponseEntity<OrderResponseDTO> removeOrderItem( @PathVariable Long idOrder, @PathVariable Long idOrderItem, @PathVariable Integer quantityToRemove){
+        return ResponseEntity.ok(orderService.removeOrderItem(idOrder, idOrderItem, quantityToRemove));
     }
 
     @PutMapping("/change-status/{idOrder}/{status}")
