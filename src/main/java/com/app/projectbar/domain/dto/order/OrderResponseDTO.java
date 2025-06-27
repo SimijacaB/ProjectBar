@@ -31,7 +31,6 @@ public class OrderResponseDTO {
 
     private OrderStatus status;
 
-    @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime date;
 
     private List<OrderItemResponseDTO> orderItemList;
