@@ -14,5 +14,7 @@ public class OrderItemResponseDTO {
     private Long id;
     private String productName;
     private Integer quantity;
+    private Double unitPrice;    // <--- Nuevo campo
+    private Double totalPrice;
 
 }
