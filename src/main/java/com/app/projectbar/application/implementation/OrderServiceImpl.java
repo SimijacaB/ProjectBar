@@ -1,6 +1,7 @@
 package com.app.projectbar.application.implementation;
 
 import com.app.projectbar.application.exception.ErrorMessagesService;
+import com.app.projectbar.application.exception.orders.OrderNotFoundByDateException;
 import com.app.projectbar.application.exception.orders.OrderNotFoundByIdException;
 import com.app.projectbar.application.exception.orders.OrdersAlreadyBilledException;
 import com.app.projectbar.application.exception.orders.OrdersNotFoundByStatusException;
@@ -75,6 +76,8 @@ public class OrderServiceImpl implements IOrderService {
                     dto.setId(orderItem.getId());
                     dto.setProductName(orderItem.getProduct().getName());
                     dto.setQuantity(orderItem.getQuantity());
+                    dto.setUnitPrice(orderItem.getProduct().getPrice());
+                    dto.setTotalPrice(orderItem.getProduct().getPrice() * orderItem.getQuantity());
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -122,7 +125,11 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public List<OrderForListResponseDTO> findByDate(LocalDate date) {
-        return null;
+        List<Order> orders = orderRepository.findOrderByDate(date);
+        if(orders.isEmpty()){
+            throw new OrderNotFoundByDateException(ErrorMessagesService.ORDERS_NOT_FOUND_BY_DATE_EXCEPTION.getMessage());
+        }
+        return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
     }
 
     @Override
@@ -189,32 +196,25 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
-    public OrderResponseDTO removeOrderItem(Long id, Long idOrderItem) {
-        Optional<Order> orderOptional = orderRepository.findById(id);
-        if (orderOptional.isEmpty()) {
-            throw new RuntimeException("Order with id " + id + " not found");
+    public OrderResponseDTO removeOrderItem(Long id, Long idOrderItem, Integer quantityToRemove) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order with id " + id + " not found"));
+
+        OrderItem orderItem = order.getOrderItems().stream()
+                .filter(item -> item.getId().equals(idOrderItem))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("OrderItem with id " + idOrderItem + " not found"));
+
+        if (quantityToRemove != null && quantityToRemove < orderItem.getQuantity()) {
+            orderItem.setQuantity(orderItem.getQuantity() - quantityToRemove);
+        } else {
+            order.getOrderItems().remove(orderItem);
         }
-        Order order = orderOptional.get();
 
-        OrderItem orderItem = order.getOrderItems()
-                .stream()
-                .filter(findOrderItem -> findOrderItem.getId().equals(idOrderItem))
-                .findFirst().get();
+        updateOrderTotalValue(order);
 
-
-        order.getOrderItems().remove(modelMapper.map(orderItem, OrderItem.class));
-        order.setOrderItems(order.getOrderItems());
-
-        // 7. Guardar la orden actualizada
         Order updatedOrder = orderRepository.save(order);
-
-        List<OrderItemResponseDTO> orderItemDTOs = getOrderItemResponse(updatedOrder);
-
-        // 8. Mapear la orden a OrderResponseDTO e incluir la lista de OrderItemResponseDTO
-        OrderResponseDTO responseDTO = modelMapper.map(updatedOrder, OrderResponseDTO.class);
-        responseDTO.setOrderItemList(orderItemDTOs);
-        return responseDTO;
-
+        return buildOrderResponseDTO(updatedOrder);
     }
 
     @Override
@@ -295,7 +295,18 @@ public class OrderServiceImpl implements IOrderService {
 
         return existingOrders;
     }
+
+    private void updateOrderTotalValue(Order order) {
+        double total = order.getOrderItems().stream()
+                .mapToDouble(item -> item.getQuantity() * item.getProduct().getPrice())
+                .sum();
+        order.setValueToPay(total);
+    }
+
+    private OrderResponseDTO buildOrderResponseDTO(Order order) {
+        List<OrderItemResponseDTO> orderItemDTOs = getOrderItemResponse(order);
+        OrderResponseDTO responseDTO = modelMapper.map(order, OrderResponseDTO.class);
+        responseDTO.setOrderItemList(orderItemDTOs);
+        return responseDTO;
+    }
 }
-
-
-
