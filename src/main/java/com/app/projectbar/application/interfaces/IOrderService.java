@@ -35,7 +35,7 @@ public interface IOrderService {
 
     OrderResponseDTO addOrderItem(Long id, OrderItemRequestDTO orderItemToAdd);
 
-    OrderResponseDTO removeOrderItem(Long id, Long idOrderItem);
+    OrderResponseDTO removeOrderItem(Long id, Long idOrderItem, Integer quantityToRemove);
 
     OrderResponseDTO changeStatus(Long id, String newStatus);
 

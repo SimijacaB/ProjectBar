@@ -1,7 +1,6 @@
 package com.app.projectbar.application.implementation;
 
 import com.app.projectbar.application.exception.ErrorMessagesService;
-import com.app.projectbar.application.exception.orders.OrderNotFoundByDateException;
 import com.app.projectbar.application.exception.orders.OrderNotFoundByIdException;
 import com.app.projectbar.application.exception.orders.OrdersAlreadyBilledException;
 import com.app.projectbar.application.exception.orders.OrdersNotFoundByStatusException;
@@ -124,13 +123,7 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
-    public List<OrderForListResponseDTO> findByDate(LocalDate date) {
-        List<Order> orders = orderRepository.findOrderByDate(date);
-        if(orders.isEmpty()){
-            throw new OrderNotFoundByDateException(ErrorMessagesService.ORDERS_NOT_FOUND_BY_DATE_EXCEPTION.getMessage());
-        }
-        return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
-    }
+    public List<OrderForListResponseDTO> findByDate(LocalDate date) {return  null;}
 
     @Override
     public List<OrderForListResponseDTO> findByStatus(OrderStatus status) {
