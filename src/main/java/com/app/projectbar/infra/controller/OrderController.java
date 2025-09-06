@@ -31,6 +31,22 @@ public class OrderController {
     public ResponseEntity<List<OrderForListResponseDTO>> findAll(){
         return ResponseEntity.ok(orderService.findAll());
     }
+
+    @GetMapping("/find-by-client-name/{name}")
+    public ResponseEntity<List<OrderForListResponseDTO>> findByClientName(@PathVariable String name){
+        return ResponseEntity.ok(orderService.findByClientName(name));
+    }
+
+    @GetMapping("/find-by-table-number/{numberTable}")
+    public ResponseEntity<List<OrderForListResponseDTO>> findByTableNumber(@PathVariable Integer numberTable){
+        return ResponseEntity.ok(orderService.findByTableNumber(numberTable));
+    }
+
+    @GetMapping("/find-by-waiter-id/{id}")
+    public ResponseEntity<List<OrderForListResponseDTO>> findByWaiterId(@PathVariable String id){
+        return ResponseEntity.ok(orderService.findByWaiterId(id));
+    }
+
     @PutMapping("/update")
     @Transactional
     public ResponseEntity<OrderResponseDTO> update(@RequestBody @Valid UpdateOrderDTO updateOrderDTO){

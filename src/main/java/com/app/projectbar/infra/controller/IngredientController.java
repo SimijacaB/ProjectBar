@@ -3,9 +3,11 @@ package com.app.projectbar.infra.controller;
 import com.app.projectbar.application.interfaces.IIngredientService;
 import com.app.projectbar.domain.dto.ingredient.IngredientRequestDTO;
 import com.app.projectbar.domain.dto.ingredient.IngredientResponseDTO;
+import com.app.projectbar.domain.dto.ingredient.UpdateIngredientDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +20,7 @@ public class IngredientController {
 
     private final IIngredientService ingredientService;
 
-    //
+
     @GetMapping("/{id}")
     public ResponseEntity<IngredientResponseDTO> findById(@PathVariable Long id) {
         return ResponseEntity.ok(ingredientService.findById(id));
@@ -35,9 +37,17 @@ public class IngredientController {
     }
 
     @PostMapping("/save")
+    @Transactional
     public ResponseEntity<IngredientResponseDTO> save(@RequestBody @Valid IngredientRequestDTO ingredientRequest) {
         return ResponseEntity.ok(ingredientService.save(ingredientRequest));
     }
+
+    @PutMapping("/update")
+    @Transactional
+    public ResponseEntity<IngredientResponseDTO> update(@RequestBody @Valid UpdateIngredientDTO updateIngredient) {
+        return ResponseEntity.ok(ingredientService.update(updateIngredient));
+    }
+
     @DeleteMapping("/delete/{code}")
     @Transactional
     public void delete(@PathVariable String code) {

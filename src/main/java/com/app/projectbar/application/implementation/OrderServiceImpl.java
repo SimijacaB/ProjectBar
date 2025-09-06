@@ -207,6 +207,7 @@ public class OrderServiceImpl implements IOrderService {
         updateOrderTotalValue(order);
 
         Order updatedOrder = orderRepository.save(order);
+
         return buildOrderResponseDTO(updatedOrder);
     }
 
@@ -248,7 +249,8 @@ public class OrderServiceImpl implements IOrderService {
     public void validateIfOrderCanBeBilled(List<Order> orders) {
 
         List<Long> alreadyBilledOrderIds = orders.stream()
-                .filter(order -> order.getStatus() == OrderStatus.READY)
+                //.filter(order -> order.getStatus() == OrderStatus.READY) Debe estar entregada la orden para ser facturada
+                .filter(order -> order.getStatus() == OrderStatus.DELIVERED)
                 .map(Order::getId)
                 .toList();
 
@@ -263,7 +265,8 @@ public class OrderServiceImpl implements IOrderService {
     // método que se encargará de settear el OrderStatus de la Orders que se vayan a facturar a READY
     public void setOrdersAsReady(List<Order> orders){
         for (Order order : orders){
-            order.setStatus(OrderStatus.READY);
+            //order.setStatus(OrderStatus.READY); Se cambia el estado de las ordenes, ya que para facturar una orden, esta debe estar entregada
+            order.setStatus(OrderStatus.DELIVERED);
         }
         orderRepository.saveAll(orders);
     }

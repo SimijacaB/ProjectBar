@@ -19,11 +19,15 @@ public class Ingredient {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(unique = true)
     private String code;
     private String name;
 
     @Enumerated(EnumType.STRING)
     private UnitOfMeasure unitOfMeasure;
+
+
     @OneToMany(mappedBy = "ingredient", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductIngredient> product = new ArrayList<>();
 }
