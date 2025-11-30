@@ -1,6 +1,7 @@
 package com.app.projectbar.domain.dto.order;
 
 import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,5 +27,6 @@ public class OrderRequestDTO {
 
     private String notes;
 
+    @JsonAlias("products")
     private List<OrderItemRequestDTO> orderProducts;
 }

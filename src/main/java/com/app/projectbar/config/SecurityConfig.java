@@ -21,55 +21,75 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                .authorizeHttpRequests( (authorize) -> authorize
-                // INGREDIENTES
-                        .requestMatchers("/api/ingredient/**").permitAll()
-                 /*
-                .requestMatchers(HttpMethod.GET, "/api/ingredient/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.CHEF.name())
-                .requestMatchers(HttpMethod.PUT, "/api/ingredient/**").hasRole(RoleEnum.ADMIN.name())
-                .requestMatchers(HttpMethod.POST, "/api/ingredient/**").hasRole(RoleEnum.ADMIN.name())
-                .requestMatchers(HttpMethod.DELETE, "/api/ingredient/**").hasRole(RoleEnum.ADMIN.name())
-                */
-                // PRODUCTOS
-                .requestMatchers( "/api/product/**").permitAll()
-                        /*
-                .requestMatchers(HttpMethod.PUT, "/api/product/**").hasRole(RoleEnum.ADMIN.name())
-                .requestMatchers(HttpMethod.GET, "/api/product/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
-                .requestMatchers(HttpMethod.DELETE, "/api/product/**").hasRole(RoleEnum.ADMIN.name())
-                */
+                .authorizeHttpRequests((authorize) -> authorize
 
-
-                // INVENTORY
-                        .requestMatchers( "/api/inventory/**").permitAll()
-                        /*
-                .requestMatchers(HttpMethod.GET, "/api/inventory/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
-                .requestMatchers("/api/inventory/**").hasRole(RoleEnum.ADMIN.name())
-
-                         */
-
-                //ORDER
-                .requestMatchers(HttpMethod.POST, "/api/order/**").permitAll()
-                /*
-                .requestMatchers(HttpMethod.GET, "/api/order/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
-                .requestMatchers(HttpMethod.PUT, "/api/order/add-order-item/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.WAITER.name())
-                .requestMatchers(HttpMethod.PUT, "/api/order/remove-order-item/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.WAITER.name())
-                .requestMatchers(HttpMethod.PUT, "/api/order/change-status/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
-*/
-                //BILL
-                .requestMatchers("/api/bill/**").permitAll()
-
-                // SWAGGER
+                // ==================== PÚBLICOS (Sin autenticación) ====================
+                
+                // Swagger - Documentación API
                 .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                
+                // Productos - Los clientes pueden ver el menú sin autenticarse
+                .requestMatchers(HttpMethod.GET, "/api/product/**").permitAll()
+                
+                // Órdenes - Los clientes pueden crear órdenes vía QR (SELF_SERVICE)
+                .requestMatchers(HttpMethod.POST, "/api/order/save").permitAll()
 
-                .anyRequest()
-                        //.authenticated()
-                .permitAll()) // Permitir todas las solicitudes sin autenticación
+                // ==================== INGREDIENTES ====================
+                // Ver ingredientes: Admin y Chef
+                .requestMatchers(HttpMethod.GET, "/api/ingredient/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.CHEF.name())
+                // Crear, modificar, eliminar ingredientes: Solo Admin
+                .requestMatchers(HttpMethod.POST, "/api/ingredient/**").hasRole(RoleEnum.ADMIN.name())
+                .requestMatchers(HttpMethod.PUT, "/api/ingredient/**").hasRole(RoleEnum.ADMIN.name())
+                .requestMatchers(HttpMethod.DELETE, "/api/ingredient/**").hasRole(RoleEnum.ADMIN.name())
+
+                // ==================== PRODUCTOS ====================
+                // Crear productos: Solo Admin
+                .requestMatchers(HttpMethod.POST, "/api/product/**").hasRole(RoleEnum.ADMIN.name())
+                // Modificar productos: Solo Admin
+                .requestMatchers(HttpMethod.PUT, "/api/product/**").hasRole(RoleEnum.ADMIN.name())
+                // Eliminar productos: Solo Admin
+                .requestMatchers(HttpMethod.DELETE, "/api/product/**").hasRole(RoleEnum.ADMIN.name())
+
+                // ==================== INVENTARIO ====================
+                // Ver inventario: Admin, Bartender, Waiter, Chef
+                .requestMatchers(HttpMethod.GET, "/api/inventory/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
+                // Modificar inventario: Solo Admin
+                .requestMatchers(HttpMethod.POST, "/api/inventory/**").hasRole(RoleEnum.ADMIN.name())
+                .requestMatchers(HttpMethod.PUT, "/api/inventory/**").hasRole(RoleEnum.ADMIN.name())
+                .requestMatchers(HttpMethod.DELETE, "/api/inventory/**").hasRole(RoleEnum.ADMIN.name())
+
+                // ==================== ÓRDENES ====================
+                // Ver órdenes: Admin, Bartender, Waiter, Chef
+                .requestMatchers(HttpMethod.GET, "/api/order/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
+                // Agregar items a orden: Admin y Waiter
+                .requestMatchers(HttpMethod.PUT, "/api/order/add-order-item/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.WAITER.name())
+                // Remover items de orden: Admin y Waiter
+                .requestMatchers(HttpMethod.PUT, "/api/order/remove-order-item/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.WAITER.name())
+                // Cambiar estado de orden: Admin, Bartender, Waiter, Chef
+                .requestMatchers(HttpMethod.PUT, "/api/order/change-status/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
+                // Actualizar orden: Admin y Waiter
+                .requestMatchers(HttpMethod.PUT, "/api/order/update").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.WAITER.name())
+                // Eliminar orden: Solo Admin
+                .requestMatchers(HttpMethod.DELETE, "/api/order/**").hasRole(RoleEnum.ADMIN.name())
+
+                // ==================== FACTURAS (BILL) ====================
+                // Ver facturas: Admin
+                .requestMatchers(HttpMethod.GET, "/api/bill/**").hasRole(RoleEnum.ADMIN.name())
+                // Crear facturas: Admin y Waiter
+                .requestMatchers(HttpMethod.POST, "/api/bill/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.WAITER.name())
+
+                // ==================== USUARIOS ====================
+                // Gestión de usuarios: Solo Admin
+                .requestMatchers("/api/user/**").hasRole(RoleEnum.ADMIN.name())
+
+                // Cualquier otra solicitud requiere autenticación
+                .anyRequest().authenticated()
+                )
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .httpBasic(Customizer.withDefaults());
 
         return httpSecurity.build();
-
     }
 
 

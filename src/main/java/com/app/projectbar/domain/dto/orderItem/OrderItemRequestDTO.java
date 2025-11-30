@@ -1,7 +1,6 @@
 package com.app.projectbar.domain.dto.orderItem;
 
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,7 +13,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class OrderItemRequestDTO {
 
-    @NotBlank
+    private Long idProduct;
+
     private String productName;
 
     @NotNull(message = "Quantity cannot be null")

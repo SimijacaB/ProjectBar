@@ -40,18 +40,73 @@ public class OrderServiceImpl implements IOrderService {
     @Override
     public OrderResponseDTO save(OrderRequestDTO orderRequest) {
         /*
-        Se intenta obtener el usuario autenticado que crea la order, hay que tener en
-        cuenta que los demás usuarios que estén autenticados pueden agregar orderItems
-        a la order, por lo tanto, para nuestra lógica podemos considerar que solo el mesero
-        que la creo pueda agregar más orderItems.
+        Dos escenarios posibles:
+        1. Mesero autenticado toma la orden - se guarda su username
+        2. Cliente hace pedido directo vía QR (sin autenticación) - waiterUserName queda null o "SELF_SERVICE"
          */
 
-        String waiterId = SecurityContextHolder.getContext().getAuthentication().getName();
+        String waiterId = null;
+        try {
+            var authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated() 
+                    && !"anonymousUser".equals(authentication.getPrincipal())) {
+                waiterId = authentication.getName();
+            }
+        } catch (Exception e) {
+            // Si no hay autenticación, es un pedido directo del cliente
+            waiterId = null;
+        }
 
-        Order newOrder = modelMapper.map(orderRequest, Order.class);
-        newOrder.setWaiterUserName(waiterId);
+        // Si no hay mesero autenticado, es un pedido directo del cliente (SELF_SERVICE)
+        if (waiterId == null || waiterId.isEmpty()) {
+            waiterId = "SELF_SERVICE";
+        }
+
+        // Crear la orden sin los items primero
+        Order newOrder = Order.builder()
+                .clientName(orderRequest.getClientName())
+                .tableNumber(orderRequest.getTableNumber())
+                .notes(orderRequest.getNotes())
+                .waiterUserName(waiterId)
+                .orderItems(new ArrayList<>())
+                .valueToPay(0.0)
+                .build();
+
+        // Procesar los productos si existen
+        if (orderRequest.getOrderProducts() != null && !orderRequest.getOrderProducts().isEmpty()) {
+            double totalValue = 0.0;
+
+            for (OrderItemRequestDTO itemRequest : orderRequest.getOrderProducts()) {
+                // Buscar el producto por ID o por nombre
+                Product product;
+                if (itemRequest.getIdProduct() != null) {
+                    product = productRepository.findById(itemRequest.getIdProduct())
+                            .orElseThrow(() -> new RuntimeException("Product not found with id: " + itemRequest.getIdProduct()));
+                } else if (itemRequest.getProductName() != null) {
+                    product = productRepository.findOneByName(itemRequest.getProductName())
+                            .orElseThrow(() -> new RuntimeException("Product not found with name: " + itemRequest.getProductName()));
+                } else {
+                    throw new RuntimeException("Product ID or name is required");
+                }
+
+                // Crear el OrderItem
+                OrderItem orderItem = OrderItem.builder()
+                        .product(product)
+                        .productName(product.getName())
+                        .quantity(itemRequest.getQuantity())
+                        .price(product.getPrice())
+                        .order(newOrder)
+                        .build();
+
+                newOrder.getOrderItems().add(orderItem);
+                totalValue += product.getPrice() * itemRequest.getQuantity();
+            }
+
+            newOrder.setValueToPay(totalValue);
+        }
+
         newOrder = orderRepository.save(newOrder);
-        return modelMapper.map(newOrder, OrderResponseDTO.class);
+        return buildOrderResponseDTO(newOrder);
     }
 
     @Override
