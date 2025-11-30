@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -45,6 +46,12 @@ public class OrderController {
     @GetMapping("/find-by-waiter-id/{id}")
     public ResponseEntity<List<OrderForListResponseDTO>> findByWaiterId(@PathVariable String id){
         return ResponseEntity.ok(orderService.findByWaiterId(id));
+    }
+
+    @GetMapping("/find-by-date/{date}")
+    public ResponseEntity<List<OrderForListResponseDTO>> findByDate(@PathVariable LocalDate date){
+        return ResponseEntity.ok(orderService.findByDate(date));
+
     }
 
     @PutMapping("/update")

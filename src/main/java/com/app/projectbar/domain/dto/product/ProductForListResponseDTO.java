@@ -17,6 +17,7 @@ public class ProductForListResponseDTO {
     private String code;
     private String description;
     private Category category;
+    private Double price;
 
 
 }

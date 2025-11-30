@@ -123,7 +123,11 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
-    public List<OrderForListResponseDTO> findByDate(LocalDate date) {return  null;}
+    public List<OrderForListResponseDTO> findByDate(LocalDate date) {
+
+        List<Order> orders = orderRepository.findByDate(date);
+        return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
+    }
 
     @Override
     public List<OrderForListResponseDTO> findByStatus(OrderStatus status) {
@@ -161,7 +165,6 @@ public class OrderServiceImpl implements IOrderService {
         } else {
             // 5. Crear un nuevo OrderItem y asociarlo a la orden
             OrderItem newOrderItem = OrderItem.builder()
-                    .product(product)
                     .productName(product.getName())
                     .quantity(orderItemToAdd.getQuantity())
                     .price(product.getPrice()) // Asignar el precio actual del producto

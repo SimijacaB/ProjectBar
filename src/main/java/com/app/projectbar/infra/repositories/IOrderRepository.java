@@ -20,5 +20,7 @@ public interface IOrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByStatus(OrderStatus status);
 
+    List<Order> findByDate(LocalDate date);
+
 
 }
