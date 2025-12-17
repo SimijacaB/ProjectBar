@@ -22,9 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -193,7 +191,7 @@ public class OrderServiceImpl implements IOrderService {
         return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
     }
 
-    @Override
+    /*@Override
     public OrderResponseDTO addOrderItem(Long orderId, OrderItemRequestDTO orderItemToAdd) {
         // 1. Recuperar la orden existente
         Order order = orderRepository.findById(orderId)
@@ -244,6 +242,51 @@ public class OrderServiceImpl implements IOrderService {
         OrderResponseDTO responseDTO = modelMapper.map(updatedOrder, OrderResponseDTO.class);
         responseDTO.setOrderItemList(orderItemDTOs);
         return responseDTO;
+    }*/
+    @Override
+    public OrderResponseDTO addOrderItem(Long orderId, OrderItemRequestDTO orderItemToAdd) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+        Product product = productRepository.findOneByName(orderItemToAdd.getProductName())
+                .orElseThrow(() -> new RuntimeException("Product not found with name: " + orderItemToAdd.getProductName()));
+
+        // ESTRATEGIA SENIOR: Convertir List a Map para acceso O(1)
+        // Key: ProductID, Value: OrderItem
+        // Esto evita recorrer la lista con un stream filter cada vez.
+        Map<Long, OrderItem> productToItemMap = new HashMap<>();
+
+        // Llenamos el mapa (O(n) una sola vez)
+        for (OrderItem item : order.getOrderItems()) {
+            productToItemMap.put(item.getProduct().getId(), item);
+        }
+
+        // Verificación O(1) - Instantánea
+        if (productToItemMap.containsKey(product.getId())) {
+            // Escenario: El producto YA existe, sumamos cantidad
+            OrderItem existingItem = productToItemMap.get(product.getId());
+            existingItem.setQuantity(existingItem.getQuantity() + orderItemToAdd.getQuantity());
+            System.out.println("Updated quantity for product: " + existingItem.getProductName());
+        } else {
+            // Escenario: Producto nuevo, creamos y agregamos
+            OrderItem newOrderItem = OrderItem.builder()
+                    .product(product) // Importante setear la entidad Product completa
+                    .productName(product.getName())
+                    .quantity(orderItemToAdd.getQuantity())
+                    .price(product.getPrice())
+                    .order(order)
+                    .build();
+
+            order.getOrderItems().add(newOrderItem);
+        }
+
+        // Recalcular total (Streams son buenos aquí para legibilidad)
+        updateOrderTotalValue(order);
+
+        Order updatedOrder = orderRepository.save(order);
+
+        // Construcción de respuesta optimizada
+        return buildOrderResponseDTO(updatedOrder);
     }
 
     @Override
@@ -303,7 +346,25 @@ public class OrderServiceImpl implements IOrderService {
                 .collect(Collectors.toList());
     }
 
-    // Método que se encargará de validar si todas las ordenes que se van a facturar, no están ya facturadas
+    public void validateIfOrderCanBeBilled(List<Order> orders) {
+        // Usamos Set para evitar duplicados si la lista 'orders' viniera sucia
+        // y para optimizar la recolección de IDs.
+        Set<Long> invalidOrderIds = orders.stream()
+                // Filtro: Nos interesan las que NO son DELIVERED (Lógica inversa para detectar error rápido)
+                .filter(order -> !OrderStatus.DELIVERED.equals(order.getStatus()))
+                .map(Order::getId)
+                .collect(Collectors.toSet());
+
+        if (!invalidOrderIds.isEmpty()) {
+            // String.join es más eficiente que Collectors.joining para colecciones simples
+            String ids = String.join(", ",
+                    invalidOrderIds.stream().map(String::valueOf).collect(Collectors.toList()));
+
+            throw new OrdersAlreadyBilledException(ErrorMessagesService.ORDER_ALREADY_BILLED_EXCEPTION + ids);
+        }
+    }
+
+/*    // Método que se encargará de validar si todas las ordenes que se van a facturar, no están ya facturadas
     public void validateIfOrderCanBeBilled(List<Order> orders) {
 
         List<Long> alreadyBilledOrderIds = orders.stream()
@@ -318,7 +379,7 @@ public class OrderServiceImpl implements IOrderService {
                     .collect(Collectors.joining(", "));
             throw new OrdersAlreadyBilledException(ErrorMessagesService.ORDER_ALREADY_BILLED_EXCEPTION + ids);
         }
-    }
+    }*/
 
     // método que se encargará de settear el OrderStatus de la Orders que se vayan a facturar a READY
     public void setOrdersAsReady(List<Order> orders){
@@ -328,8 +389,39 @@ public class OrderServiceImpl implements IOrderService {
         }
         orderRepository.saveAll(orders);
     }
+    // Reemplaza tu método actual con este
+    public List<Order> getExistingOrdersOrThrow(List<Long> orderIds) {
+        // 1. Ir a la base de datos UNA sola vez (Batch Query)
+        List<Order> foundOrders = orderRepository.findAllById(orderIds);
 
-    // Este método se encarga de comprobar que las ordenes a facturar, existan
+        // Si encontramos todas, retornamos rápido
+        if (foundOrders.size() == orderIds.size()) {
+            return foundOrders;
+        }
+
+        // 2. ESTRATEGIA SENIOR: Usar un HashSet para búsquedas O(1)
+        // Convertimos las órdenes encontradas a un Set de IDs
+        Set<Long> foundIds = foundOrders.stream()
+                .map(Order::getId)
+                .collect(Collectors.toSet());
+
+        // 3. Detectar cuáles faltan
+        // Recorremos la lista original y verificamos contra el Set (O(1) por item)
+        List<Long> notFoundIds = new ArrayList<>();
+        for (Long id : orderIds) {
+            if (!foundIds.contains(id)) { // Esto es O(1) gracias al Hash
+                notFoundIds.add(id);
+            }
+        }
+
+        if (!notFoundIds.isEmpty()) {
+            throw new RuntimeException("The following Order IDs do not exist: " + notFoundIds);
+        }
+
+        return foundOrders;
+
+
+    /*// Este método se encarga de comprobar que las ordenes a facturar, existan
     public List<Order> getExistingOrdersOrThrow(List<Long> orderIds) {
         List<Order> existingOrders = new ArrayList<>();
         List<Long> notFoundIds = new ArrayList<>();
@@ -347,7 +439,7 @@ public class OrderServiceImpl implements IOrderService {
             throw new RuntimeException("The following Order IDs do not exist: " + notFoundIds);
         }
 
-        return existingOrders;
+        return existingOrders;*/
     }
 
     private void updateOrderTotalValue(Order order) {
