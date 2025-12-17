@@ -191,58 +191,6 @@ public class OrderServiceImpl implements IOrderService {
         return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
     }
 
-    /*@Override
-    public OrderResponseDTO addOrderItem(Long orderId, OrderItemRequestDTO orderItemToAdd) {
-        // 1. Recuperar la orden existente
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-
-        // 2. Validar el producto
-        Product product = productRepository.findOneByName(orderItemToAdd.getProductName())
-                .orElseThrow(() -> new RuntimeException("Product not found with name: " + orderItemToAdd.getProductName()));
-
-        Optional<OrderItem> existingOrderItem = order.getOrderItems().stream()
-                .filter(item -> item.getProduct().getId().equals(product.getId()))
-                .findFirst();
-
-        if (existingOrderItem.isPresent()) {
-            System.out.println("Product name: " + existingOrderItem.get().getProductName());
-        } else {
-            System.out.println("No matching OrderItem found for Product ID: " + product.getId());
-        }
-
-        if (existingOrderItem.isPresent()) {
-            // 4. Actualizar la cantidad si ya existe
-            OrderItem orderItem = existingOrderItem.get();
-            orderItem.setQuantity(orderItem.getQuantity() + orderItemToAdd.getQuantity());
-        } else {
-            // 5. Crear un nuevo OrderItem y asociarlo a la orden
-            OrderItem newOrderItem = OrderItem.builder()
-                    .productName(product.getName())
-                    .quantity(orderItemToAdd.getQuantity())
-                    .price(product.getPrice()) // Asignar el precio actual del producto
-                    .order(order)
-                    .build();
-            order.getOrderItems().add(newOrderItem);
-        }
-
-        //Se modifica el método para poder calcular correctamente el valor total de cada producto
-
-        double total = order.getOrderItems().stream()
-                .mapToDouble(item -> item.getQuantity() * item.getProduct().getPrice())
-                .sum();
-        order.setValueToPay(total);
-
-        // 7. Guardar la orden actualizada
-        Order updatedOrder = orderRepository.save(order);
-
-        List<OrderItemResponseDTO> orderItemDTOs = getOrderItemResponse(updatedOrder);
-
-        // 8. Mapear la orden a OrderResponseDTO e incluir la lista de OrderItemResponseDTO
-        OrderResponseDTO responseDTO = modelMapper.map(updatedOrder, OrderResponseDTO.class);
-        responseDTO.setOrderItemList(orderItemDTOs);
-        return responseDTO;
-    }*/
     @Override
     public OrderResponseDTO addOrderItem(Long orderId, OrderItemRequestDTO orderItemToAdd) {
         Order order = orderRepository.findById(orderId)
@@ -364,22 +312,6 @@ public class OrderServiceImpl implements IOrderService {
         }
     }
 
-/*    // Método que se encargará de validar si todas las ordenes que se van a facturar, no están ya facturadas
-    public void validateIfOrderCanBeBilled(List<Order> orders) {
-
-        List<Long> alreadyBilledOrderIds = orders.stream()
-                //.filter(order -> order.getStatus() == OrderStatus.READY) Debe estar entregada la orden para ser facturada
-                .filter(order -> order.getStatus() == OrderStatus.DELIVERED)
-                .map(Order::getId)
-                .toList();
-
-        if(!alreadyBilledOrderIds.isEmpty()){
-            String ids = alreadyBilledOrderIds.stream()
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(", "));
-            throw new OrdersAlreadyBilledException(ErrorMessagesService.ORDER_ALREADY_BILLED_EXCEPTION + ids);
-        }
-    }*/
 
     // método que se encargará de settear el OrderStatus de la Orders que se vayan a facturar a READY
     public void setOrdersAsReady(List<Order> orders){
@@ -420,26 +352,6 @@ public class OrderServiceImpl implements IOrderService {
 
         return foundOrders;
 
-
-    /*// Este método se encarga de comprobar que las ordenes a facturar, existan
-    public List<Order> getExistingOrdersOrThrow(List<Long> orderIds) {
-        List<Order> existingOrders = new ArrayList<>();
-        List<Long> notFoundIds = new ArrayList<>();
-
-        for (Long id : orderIds) {
-            Optional<Order> maybeOrder = orderRepository.findById(id);
-            if (maybeOrder.isPresent()) {
-                existingOrders.add(maybeOrder.get());
-            } else {
-                notFoundIds.add(id);
-            }
-        }
-
-        if (!notFoundIds.isEmpty()) {
-            throw new RuntimeException("The following Order IDs do not exist: " + notFoundIds);
-        }
-
-        return existingOrders;*/
     }
 
     private void updateOrderTotalValue(Order order) {
