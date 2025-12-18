@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -53,6 +54,12 @@ public class OrderController {
         return ResponseEntity.ok(orderService.findByDate(date));
 
     }
+    @GetMapping("/table/{tableNumber}/grouped-by-client")
+    public ResponseEntity<Map<String, List<OrderForListResponseDTO>>> getOrdersByClient(
+            @PathVariable Integer tableNumber
+    ) {
+        return ResponseEntity.ok(orderService.findPendingOrdersByTableGroupedByClient(tableNumber));
+    }
 
     @PutMapping("/update")
     @Transactional
@@ -65,7 +72,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.findById(id));
     }
 
-    @PutMapping("/add-order-item/{idOrder}")
+    @PatchMapping("/add-order-item/{idOrder}")
     @Transactional
     public ResponseEntity<OrderResponseDTO> addOrderItem( @PathVariable Long idOrder, @RequestBody @Valid OrderItemRequestDTO itemRequestDTO){
         return ResponseEntity.ok(orderService.addOrderItem(idOrder, itemRequestDTO));
@@ -77,7 +84,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.removeOrderItem(idOrder, idOrderItem, quantityToRemove));
     }
 
-    @PutMapping("/change-status/{idOrder}/{status}")
+    @PatchMapping("/change-status/{idOrder}/{status}")
     @Transactional
     public ResponseEntity<OrderResponseDTO> changeStatusOrder( @PathVariable Long idOrder, @PathVariable String status){
         return ResponseEntity.ok(orderService.changeStatus(idOrder, status));

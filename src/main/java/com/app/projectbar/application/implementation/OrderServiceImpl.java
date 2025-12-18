@@ -114,29 +114,29 @@ public class OrderServiceImpl implements IOrderService {
                 .map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
     }
 
-    @Override
-    public OrderResponseDTO findById(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new OrderNotFoundByIdException(ErrorMessagesService.ORDER_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
+        @Override
+        public OrderResponseDTO findById(Long id) {
+            Order order = orderRepository.findById(id)
+                    .orElseThrow(() -> new OrderNotFoundByIdException(ErrorMessagesService.ORDER_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
 
-        //Se mapea la lista de orderItems y se cambia la lista de OrderResponse de OrderItem a OrderItemResponseDTO
+            //Se mapea la lista de orderItems y se cambia la lista de OrderResponse de OrderItem a OrderItemResponseDTO
 
-        OrderResponseDTO orderResponseDTO = modelMapper.map(order, OrderResponseDTO.class);
-        List<OrderItemResponseDTO> orderItemDTOs = order.getOrderItems().stream()
-                .map(orderItem -> {
-                    OrderItemResponseDTO dto = new OrderItemResponseDTO();
-                    dto.setId(orderItem.getId());
-                    dto.setProductName(orderItem.getProduct().getName());
-                    dto.setQuantity(orderItem.getQuantity());
-                    dto.setUnitPrice(orderItem.getProduct().getPrice());
-                    dto.setTotalPrice(orderItem.getProduct().getPrice() * orderItem.getQuantity());
-                    return dto;
-                })
-                .collect(Collectors.toList());
-        orderResponseDTO.setOrderItemList(orderItemDTOs);
+            OrderResponseDTO orderResponseDTO = modelMapper.map(order, OrderResponseDTO.class);
+            List<OrderItemResponseDTO> orderItemDTOs = order.getOrderItems().stream()
+                    .map(orderItem -> {
+                        OrderItemResponseDTO dto = new OrderItemResponseDTO();
+                        dto.setId(orderItem.getId());
+                        dto.setProductName(orderItem.getProduct().getName());
+                        dto.setQuantity(orderItem.getQuantity());
+                        dto.setUnitPrice(orderItem.getProduct().getPrice());
+                        dto.setTotalPrice(orderItem.getProduct().getPrice() * orderItem.getQuantity());
+                        return dto;
+                    })
+                    .collect(Collectors.toList());
+            orderResponseDTO.setOrderItemList(orderItemDTOs);
 
-        return orderResponseDTO;
-    }
+            return orderResponseDTO;
+        }
 
     @Override
     public OrderResponseDTO updateOrder(UpdateOrderDTO updateOrderDTO) {
@@ -192,9 +192,29 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
+    public Map<String, List<OrderForListResponseDTO>> findPendingOrdersByTableGroupedByClient(Integer tableNumber) {
+// 1. Obtener todas las órdenes de la mesa que NO estén facturadas
+        List<Order> orders = orderRepository.findByTableNumberAndStatusNot(
+                tableNumber,
+                OrderStatus.BILLED
+        );
+
+        // 2. Agrupar por nombre del cliente
+        return orders.stream()
+                .map(order -> modelMapper.map(order, OrderForListResponseDTO.class))
+                .collect(Collectors.groupingBy(OrderForListResponseDTO::getClientName));
+
+    }
+
+    @Override
     public OrderResponseDTO addOrderItem(Long orderId, OrderItemRequestDTO orderItemToAdd) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+        // ✅ VALIDACIÓN: No permitir agregar items a órdenes entregadas
+        if (OrderStatus.DELIVERED.equals(order.getStatus())) {
+            throw new RuntimeException("Cannot add items to a delivered order. Please create a new order.");
+        }
 
         Product product = productRepository.findOneByName(orderItemToAdd.getProductName())
                 .orElseThrow(() -> new RuntimeException("Product not found with name: " + orderItemToAdd.getProductName()));
@@ -214,7 +234,7 @@ public class OrderServiceImpl implements IOrderService {
             // Escenario: El producto YA existe, sumamos cantidad
             OrderItem existingItem = productToItemMap.get(product.getId());
             existingItem.setQuantity(existingItem.getQuantity() + orderItemToAdd.getQuantity());
-            System.out.println("Updated quantity for product: " + existingItem.getProductName());
+            existingItem.setPrice(product.getPrice());
         } else {
             // Escenario: Producto nuevo, creamos y agregamos
             OrderItem newOrderItem = OrderItem.builder()
@@ -290,6 +310,8 @@ public class OrderServiceImpl implements IOrderService {
                         .id(orderItem.getId())
                         .productName(orderItem.getProduct().getName())
                         .quantity(orderItem.getQuantity())
+                        .unitPrice(orderItem.getProduct().getPrice())
+                        .totalPrice(orderItem.getProduct().getPrice() * orderItem.getQuantity())
                         .build())
                 .collect(Collectors.toList());
     }

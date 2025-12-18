@@ -22,5 +22,8 @@ public interface IOrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByDate(LocalDate date);
 
+    List<Order> findByTableNumberAndStatusNot(Integer tableNumber, OrderStatus status);
+
+
 
 }

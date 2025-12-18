@@ -11,6 +11,7 @@ import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public interface IOrderService {
 
@@ -32,6 +33,8 @@ public interface IOrderService {
     List<OrderForListResponseDTO> findByDate(LocalDate date);
 
     List<OrderForListResponseDTO> findByStatus(OrderStatus status);
+
+    public Map<String, List<OrderForListResponseDTO>> findPendingOrdersByTableGroupedByClient(Integer tableNumber);
 
     OrderResponseDTO addOrderItem(Long id, OrderItemRequestDTO orderItemToAdd);
 
