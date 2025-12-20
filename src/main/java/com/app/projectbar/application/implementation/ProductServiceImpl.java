@@ -34,17 +34,7 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     public ProductResponseDTO findById(Long id) {
-        var product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product with id " + id + " not found"));
-        ProductResponseDTO productResponseDTO = modelMapper.map(product, ProductResponseDTO.class);
-
-        // Map ingredient_id for each ingredient in the response DTO
-        for (int i = 0; i < productResponseDTO.getIngredients().size(); i++) {
-            productResponseDTO.getIngredients().get(i).setIngredient_id(product.getProductIngredients().get(i).getIngredient().getId());
-            productResponseDTO.getIngredients().get(i).setIngredientExtend(product.getProductIngredients().get(i).getIngredient().getUnitOfMeasure().toString());
-        }
-
-        return productResponseDTO;
+        return modelMapper.map(productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product with id " + id + " not found")), ProductResponseDTO.class);
     }
 
     @Override
@@ -56,10 +46,7 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     public List<ProductForListResponseDTO> findByName(String name) {
-        var productList = productRepository.findByName(name)
-                .orElseThrow(() -> new RuntimeException("Products with name " + name + " not found"));
-
-        return productList.stream()
+        return productRepository.findByName(name).stream()
                 .map(product -> modelMapper.map(product, ProductForListResponseDTO.class)).toList();
     }
 
@@ -90,57 +77,19 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     public List<ProductForListResponseDTO> findByCategory(Category category) {
-        var productList = productRepository.findByCategory(category)
-                .orElseThrow(() -> new RuntimeException("Products with name " + category + " not found"));
 
-        return productList.stream()
+        return productRepository.findByCategory(category).stream()
                 .map(product -> modelMapper.map(product, ProductForListResponseDTO.class)).toList();
     }
 
-   /* public ProductResponseDTO saveOrUpdate(Product product, ProductRequestDTO productRequest) {
+    @Override
+    public List<ProductForListResponseDTO> findByNameContaining(String name) {
+        return productRepository.findByNameContaining(name).stream()
+                .map(product -> modelMapper.map(product, ProductForListResponseDTO.class)).toList();
+    }
 
-        product.setName(productRequest.getName());
-        product.setCode(productRequest.getCode());
-        product.setDescription(productRequest.getDescription());
-        product.setPrice(productRequest.getPrice());
-        product.setPhotoId(productRequest.getPhotoId());
-        product.setIsPrepared(productRequest.getIsPrepared());
-        product.setCategory(productRequest.getCategory());
 
-        // Eliminar las relaciones actuales si es una actualización
-        if (product.getId() != null) {
-            productIngredientRepository.deleteAll(product.getProductIngredients());
-        }
-
-        // Crear las nuevas relaciones de ProductIngredient
-        List<ProductIngredient> productIngredients = productRequest.getIngredients()
-                .stream()
-                .map(piRequest -> {
-                    Ingredient ingredient = ingredientRepository.findById(piRequest.getIngredientId())
-                            .orElseThrow(() -> new RuntimeException("Ingredient with ID " + piRequest.getIngredientId() + " not found"));
-                    return ProductIngredient.builder()
-                            .product(product)
-                            .ingredient(ingredient)
-                            .amount(piRequest.getAmount())
-                            .build();
-                })
-                .collect(Collectors.toList());
-
-        product.setProductIngredients(productIngredients);
-        Product savedProduct = productRepository.save(product);
-
-        // Guarda las relaciones de ProductIngredient
-        productIngredientRepository.saveAll(productIngredients);
-
-        ProductResponseDTO productResponseDTO = modelMapper.map(savedProduct, ProductResponseDTO.class);
-        for (int i = 0; i < productResponseDTO.getIngredients().size() ; i++) {
-            productResponseDTO.getIngredients().get(i).setIngredient_id(savedProduct.getProductIngredients().get(i).getIngredient().getId());
-            productResponseDTO.getIngredients().get(i).setIngredientExtend(savedProduct.getProductIngredients().get(i).getIngredient().getUnitOfMeasure().toString());
-        }
-        return productResponseDTO;
-
-    }*/
-   public ProductResponseDTO saveOrUpdate(Product product, ProductRequestDTO productRequest) {
+    public ProductResponseDTO saveOrUpdate(Product product, ProductRequestDTO productRequest) {
 
        product.setName(productRequest.getName());
        product.setCode(productRequest.getCode());

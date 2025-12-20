@@ -25,4 +25,6 @@ public interface IProductService {
     void delete(String code);
 
     List<ProductForListResponseDTO> findByCategory(Category category);
+
+    List<ProductForListResponseDTO> findByNameContaining(String name);
 }

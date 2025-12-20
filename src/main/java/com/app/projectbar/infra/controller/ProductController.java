@@ -62,6 +62,11 @@ public class ProductController {
         return ResponseEntity.ok(productService.findByCategory(categoryEnum));
     }
 
+    @GetMapping("/find-by-name-containing/{name}")
+    public ResponseEntity<List<ProductForListResponseDTO>> findByNameContaining(@PathVariable String name){
+        return ResponseEntity.ok(productService.findByNameContaining(name));
+    }
+
     @DeleteMapping("/delete/{code}")
     public void delete(@PathVariable String code){
         productService.delete(code);
