@@ -282,11 +282,10 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public OrderResponseDTO changeStatus(Long id, String newStatus) {
-        Optional<Order> orderOptional = orderRepository.findById(id);
-        if (orderOptional.isEmpty()) {
-            throw new RuntimeException("Order with id " + id + " not found");
-        }
-        Order order = orderOptional.get();
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundByIdException(ErrorMessagesService.ORDER_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
+
 
         // Solo entra aquí si el estado a cambiar es "DELIVERED"
         if (newStatus.equals(OrderStatus.DELIVERED.toString())) {
@@ -296,9 +295,9 @@ public class OrderServiceImpl implements IOrderService {
         }
 
         order.setStatus(OrderStatus.valueOf(newStatus));
-        orderRepository.save(order);
 
-        return modelMapper.map(orderRepository.save(order), OrderResponseDTO.class);
+
+        return buildOrderResponseDTO(orderRepository.save(order));
     }
 
 
