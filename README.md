@@ -60,10 +60,8 @@ El proyecto incluye documentación interactiva de la API mediante Swagger/OpenAP
 
 Una vez ejecutada la aplicación, puedes acceder a:
 
-- http://localhost:8080/swagger-ui.html  
-- http://localhost:8080/swagger-ui/index.html  
+- http://localhost:8090/swagger-ui.html  
+- http://localhost:8090/swagger-ui/index.html  
 
-(La URL puede variar según la versión de Springdoc configurada).
 
-Los controladores REST se encuentran en:
 
