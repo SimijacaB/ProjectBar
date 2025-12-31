@@ -16,7 +16,7 @@ public interface IProductService {
 
     ProductResponseDTO findByCode(String code);
 
-    List<ProductForListResponseDTO> findByName(String name);
+    ProductResponseDTO findByNameExact(String name);
 
     ProductResponseDTO save(ProductRequestDTO productRequestDTO);
 

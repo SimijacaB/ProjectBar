@@ -45,13 +45,24 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public List<ProductForListResponseDTO> findByName(String name) {
-        return productRepository.findByName(name).stream()
-                .map(product -> modelMapper.map(product, ProductForListResponseDTO.class)).toList();
+    public ProductResponseDTO findByNameExact(String name) {
+        var product = productRepository.findOneByName(name)
+                .orElseThrow(() -> new RuntimeException("Product with name " + name + " not found"));
+        return modelMapper.map(product, ProductResponseDTO.class);
     }
 
     @Override
     public ProductResponseDTO save(ProductRequestDTO productRequest) {
+        // Validar si el producto ya existe por nombre
+        if (productRepository.existsByNameIgnoreCase(productRequest.getName())) {
+            throw new RuntimeException("Product with name '" + productRequest.getName() + "' already exists");
+        }
+
+        // Validar si el producto ya existe por código
+        if (productRepository.existsByCode(productRequest.getCode())) {
+            throw new RuntimeException("Product with code '" + productRequest.getCode() + "' already exists");
+        }
+
         var product = new Product();
         return saveOrUpdate(product, productRequest);
     }
@@ -60,6 +71,17 @@ public class ProductServiceImpl implements IProductService {
     public ProductResponseDTO update(UpdateProductRequestDTO productRequestDTO) {
         var product = productRepository.findById(productRequestDTO.getId())
                 .orElseThrow(() -> new RuntimeException("Product with id " + productRequestDTO.getId() + " not found"));
+
+        // Validaciones para evitar colisiones cuando se actualiza nombre o código
+        if (!product.getName().equalsIgnoreCase(productRequestDTO.getName())
+                && productRepository.existsByNameIgnoreCase(productRequestDTO.getName())) {
+            throw new RuntimeException("Product with name '" + productRequestDTO.getName() + "' already exists");
+        }
+
+        if (!product.getCode().equals(productRequestDTO.getCode())
+                && productRepository.existsByCode(productRequestDTO.getCode())) {
+            throw new RuntimeException("Product with code '" + productRequestDTO.getCode() + "' already exists");
+        }
 
         ProductRequestDTO mapped = modelMapper.map(productRequestDTO, ProductRequestDTO.class);
 
@@ -145,5 +167,3 @@ public class ProductServiceImpl implements IProductService {
 
 
 }
-
-

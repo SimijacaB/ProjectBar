@@ -37,5 +37,9 @@ public interface IProductRepository extends JpaRepository <Product, Long>{
     """)
     List<Product> findByNameContaining(@Param("name") String name);
 
+    // Nuevos métodos para validaciones rápidas de unicidad (más eficientes que traer todo el objeto)
+    boolean existsByNameIgnoreCase(String name);
+
+    boolean existsByCode(String code);
 
 }

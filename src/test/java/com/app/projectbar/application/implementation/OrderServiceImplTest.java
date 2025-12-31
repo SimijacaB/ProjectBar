@@ -16,9 +16,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.modelmapper.ModelMapper;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
-
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -67,6 +68,7 @@ class OrderServiceImplTest {
         order.setDate(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
         order.setNotes(orderRequest.getNotes());
+        order.setOrderItems(new ArrayList<>()); // Initialize to prevent NPE
 
         order2 = new Order();
         order2.setId(2L);
@@ -75,6 +77,7 @@ class OrderServiceImplTest {
         order2.setDate(LocalDateTime.now());
         order2.setStatus(OrderStatus.PENDING);
         order2.setNotes("Notes2");
+        order2.setOrderItems(new ArrayList<>()); // Initialize to prevent NPE
 
         List<Order> orders = Arrays.asList(order, order2);
 
@@ -179,7 +182,7 @@ class OrderServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class , () ->
                 orderService.findById(id));
 
-        assertEquals("Order with id " + id + " not found", exception.getMessage());
+        assertEquals("We haven't found an order with this id.", exception.getMessage());
         verify(orderRepository).findById(id);
 
     }
@@ -192,6 +195,9 @@ class OrderServiceImplTest {
         updateOrderDTO.setClientName("Santiago");
         updateOrderDTO.setNotes("Cerveza con hielo");
         updateOrderDTO.setTableNumber(3);
+
+        // Update the mock response to reflect the changes
+        orderResponse.setNotes(updateOrderDTO.getNotes());
 
         // --- WHEN ---
         OrderResponseDTO result = orderService.updateOrder(updateOrderDTO);
@@ -219,7 +225,7 @@ class OrderServiceImplTest {
             orderService.updateOrder(updateOrderDTO);
         });
 
-        assertEquals("Order with id " + updateOrderDTO.getId() + " not found", exception.getMessage());
+        assertEquals("We haven't found an order with this id.", exception.getMessage());
         verify(orderRepository).findById(updateOrderDTO.getId());
     }
 

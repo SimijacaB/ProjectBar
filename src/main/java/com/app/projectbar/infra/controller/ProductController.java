@@ -51,8 +51,8 @@ public class ProductController {
 
     @GetMapping("/find-by-name/{name}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<ProductForListResponseDTO>> findByName(@PathVariable String name){
-        return ResponseEntity.ok(productService.findByName(name));
+    public ResponseEntity<ProductResponseDTO> findByNameExact(@PathVariable String name){
+        return ResponseEntity.ok(productService.findByNameExact(name));
     }
 
     @GetMapping("/find-by-category/{category}")
