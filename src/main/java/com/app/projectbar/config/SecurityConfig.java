@@ -7,9 +7,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -18,6 +20,13 @@ import java.util.List;
 
 @Configuration
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
@@ -34,6 +43,9 @@ public class SecurityConfig {
                 // Órdenes - Los clientes pueden crear órdenes vía QR (SELF_SERVICE)
                 .requestMatchers(HttpMethod.POST, "/api/order/save").permitAll()
 
+                // ==================== AUTENTICACIÓN ====================
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+
                 // ==================== INGREDIENTES ====================
                 // Ver ingredientes: Admin y Chef
                 .requestMatchers(HttpMethod.GET, "/api/ingredient/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.CHEF.name())
@@ -49,6 +61,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/product/**").hasRole(RoleEnum.ADMIN.name())
                 // Eliminar productos: Solo Admin
                 .requestMatchers(HttpMethod.DELETE, "/api/product/**").hasRole(RoleEnum.ADMIN.name())
+
 
                 // ==================== INVENTARIO ====================
                 // Ver inventario: Admin, Bartender, Waiter, Chef
@@ -87,7 +100,11 @@ public class SecurityConfig {
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
-                .httpBasic(Customizer.withDefaults());
+                .httpBasic(Customizer.withDefaults())
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();
     }
