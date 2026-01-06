@@ -8,11 +8,14 @@ import com.app.projectbar.domain.dto.order.UpdateOrderDTO;
 import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -44,16 +47,56 @@ public class OrderController {
         return ResponseEntity.ok(orderService.findByTableNumber(numberTable));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/find-by-waiter-id/{id}")
     public ResponseEntity<List<OrderForListResponseDTO>> findByWaiterId(@PathVariable String id){
         return ResponseEntity.ok(orderService.findByWaiterId(id));
     }
 
+    /**
+     * Endpoint para que el mesero autenticado vea sus propias órdenes.
+     * No necesita pasar ID, el sistema detecta quién está logueado.
+     */
+    @GetMapping("/my-orders")
+    public ResponseEntity<List<OrderForListResponseDTO>> findMyOrders(){
+        return ResponseEntity.ok(orderService.findMyOrders());
+    }
+
+    /**
+     * Endpoint para que el mesero autenticado vea sus órdenes filtradas por rango de fechas.
+     * @param startDate Fecha de inicio (formato: yyyy-MM-dd)
+     * @param endDate Fecha de fin (formato: yyyy-MM-dd)
+     */
+    @GetMapping("/my-orders/date-range")
+    public ResponseEntity<List<OrderForListResponseDTO>> findMyOrdersByDateRange(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ){
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(23, 59, 59, 999999999);
+        return ResponseEntity.ok(orderService.findMyOrdersByDateRange(startDateTime, endDateTime));
+    }
+
     @GetMapping("/find-by-date/{date}")
     public ResponseEntity<List<OrderForListResponseDTO>> findByDate(@PathVariable LocalDate date){
         return ResponseEntity.ok(orderService.findByDate(date));
-
     }
+
+    /**
+     * Endpoint para filtrar órdenes por rango de fechas (Admin).
+     * @param startDate Fecha de inicio (formato: yyyy-MM-dd)
+     * @param endDate Fecha de fin (formato: yyyy-MM-dd)
+     */
+    @GetMapping("/date-range")
+    public ResponseEntity<List<OrderForListResponseDTO>> findByDateRange(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ){
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(23, 59, 59, 999999999);
+        return ResponseEntity.ok(orderService.findByDateRange(startDateTime, endDateTime));
+    }
+
     @GetMapping("/table/{tableNumber}/grouped-by-client")
     public ResponseEntity<Map<String, List<OrderForListResponseDTO>>> getOrdersByClient(
             @PathVariable Integer tableNumber

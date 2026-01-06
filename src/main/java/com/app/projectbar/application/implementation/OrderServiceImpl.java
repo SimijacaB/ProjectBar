@@ -22,6 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -171,15 +172,61 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public List<OrderForListResponseDTO> findByWaiterId(String id) {
+
         List<Order> orders = orderRepository.findByWaiterUserName(id);
         return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
     }
 
     @Override
-    public List<OrderForListResponseDTO> findByDate(LocalDate date) {
+    public List<OrderForListResponseDTO> findMyOrders() {
+        // Obtener el username del mesero autenticado
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        List<Order> orders = orderRepository.findByDate(date);
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new RuntimeException("User must be authenticated to view their orders");
+        }
+
+        String waiterUsername = authentication.getName();
+        List<Order> orders = orderRepository.findByWaiterUserName(waiterUsername);
+        return orders.stream()
+                .map(order -> modelMapper.map(order, OrderForListResponseDTO.class))
+                .toList();
+    }
+
+    @Override
+    public List<OrderForListResponseDTO> findMyOrdersByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+        // Obtener el username del mesero autenticado
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new RuntimeException("User must be authenticated to view their orders");
+        }
+
+        String waiterUsername = authentication.getName();
+        List<Order> orders = orderRepository.findByWaiterUserNameAndDateBetween(waiterUsername, startDate, endDate);
+        return orders.stream()
+                .map(order -> modelMapper.map(order, OrderForListResponseDTO.class))
+                .toList();
+    }
+
+    @Override
+    public List<OrderForListResponseDTO> findByDate(LocalDate date) {
+        // Convertir LocalDate a rango de LocalDateTime (inicio y fin del día)
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(23, 59, 59, 999999999);
+        
+        List<Order> orders = orderRepository.findByDateBetween(startOfDay, endOfDay);
         return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
+    }
+
+    @Override
+    public List<OrderForListResponseDTO> findByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+        List<Order> orders = orderRepository.findByDateBetween(startDate, endDate);
+        return orders.stream()
+                .map(order -> modelMapper.map(order, OrderForListResponseDTO.class))
+                .toList();
     }
 
     @Override

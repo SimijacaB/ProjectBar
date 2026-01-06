@@ -1,4 +1,4 @@
-package com.app.projectbar.application.controller;
+package com.app.projectbar.infra.controller;
 
 import com.app.projectbar.domain.securityDtos.LoginRequestDTO;
 import com.app.projectbar.domain.securityDtos.LoginResponseDTO;
