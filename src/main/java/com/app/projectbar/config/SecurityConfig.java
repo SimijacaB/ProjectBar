@@ -79,7 +79,7 @@ public class SecurityConfig {
                 // Remover items de orden: Admin y Waiter
                 .requestMatchers(HttpMethod.PUT, "/api/order/remove-order-item/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.WAITER.name())
                 // Cambiar estado de orden: Admin, Bartender, Waiter, Chef
-                .requestMatchers(HttpMethod.PUT, "/api/order/change-status/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
+                .requestMatchers(HttpMethod.PATCH, "/api/order/change-status/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
                 // Actualizar orden: Admin y Waiter
                 .requestMatchers(HttpMethod.PUT, "/api/order/update").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.WAITER.name())
                 // Eliminar orden: Solo Admin
@@ -119,7 +119,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:5173", "http://localhost:5174", "http://localhost:3000")); // Orígenes permitidos
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Métodos permitidos
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")); // Métodos permitidos
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type")); // Encabezados permitidos
         configuration.setAllowCredentials(true);
 
