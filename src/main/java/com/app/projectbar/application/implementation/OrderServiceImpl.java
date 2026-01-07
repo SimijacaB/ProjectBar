@@ -39,26 +39,38 @@ public class OrderServiceImpl implements IOrderService {
     @Override
     public OrderResponseDTO save(OrderRequestDTO orderRequest) {
         /*
-        Dos escenarios posibles:
-        1. Mesero autenticado toma la orden - se guarda su username
-        2. Cliente hace pedido directo vía QR (sin autenticación) - waiterUserName queda null o "SELF_SERVICE"
+        Dos escenarios según los requerimientos:
+        1. Cliente hace pedido vía QR (sin autenticación) 
+           → estado CREATED, waiterUserName = null
+        2. Mesero autenticado toma la orden 
+           → estado IN_PROGRESS, waiterUserName = mesero
          */
 
         String waiterId = null;
+        boolean isWaiterOrder = false;
+        
         try {
             var authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.isAuthenticated() 
                     && !"anonymousUser".equals(authentication.getPrincipal())) {
                 waiterId = authentication.getName();
+                isWaiterOrder = true;
             }
         } catch (Exception e) {
             // Si no hay autenticación, es un pedido directo del cliente
             waiterId = null;
+            isWaiterOrder = false;
         }
 
-        // Si no hay mesero autenticado, es un pedido directo del cliente (SELF_SERVICE)
-        if (waiterId == null || waiterId.isEmpty()) {
-            waiterId = "SELF_SERVICE";
+        // Determinar estado inicial según el tipo de pedido
+        OrderStatus initialStatus;
+        if (isWaiterOrder) {
+            // Pedido de mesero: inicia directamente en IN_PROGRESS
+            initialStatus = OrderStatus.IN_PROGRESS;
+        } else {
+            // Pedido de cliente QR: inicia en CREATED (sin mesero)
+            initialStatus = OrderStatus.CREATED;
+            waiterId = null; // Asegurar que no tiene mesero
         }
 
         // Crear la orden sin los items primero
@@ -67,6 +79,7 @@ public class OrderServiceImpl implements IOrderService {
                 .tableNumber(orderRequest.getTableNumber())
                 .notes(orderRequest.getNotes())
                 .waiterUserName(waiterId)
+                .status(initialStatus)
                 .orderItems(new ArrayList<>())
                 .valueToPay(0.0)
                 .build();
@@ -266,7 +279,6 @@ public class OrderServiceImpl implements IOrderService {
         Product product = productRepository.findOneByName(orderItemToAdd.getProductName())
                 .orElseThrow(() -> new RuntimeException("Product not found with name: " + orderItemToAdd.getProductName()));
 
-        // ESTRATEGIA SENIOR: Convertir List a Map para acceso O(1)
         // Key: ProductID, Value: OrderItem
         // Esto evita recorrer la lista con un stream filter cada vez.
         Map<Long, OrderItem> productToItemMap = new HashMap<>();
@@ -333,18 +345,88 @@ public class OrderServiceImpl implements IOrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderNotFoundByIdException(ErrorMessagesService.ORDER_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
 
+        OrderStatus targetStatus = OrderStatus.valueOf(newStatus);
+        
+        // Validaciones de transición de estado según reglas de negocio
+        validateStatusTransition(order, targetStatus);
 
         // Solo entra aquí si el estado a cambiar es "DELIVERED"
-        if (newStatus.equals(OrderStatus.DELIVERED.toString())) {
+        if (targetStatus == OrderStatus.DELIVERED) {
             for (OrderItem item : order.getOrderItems()) {
                 inventoryService.deductStock(item.getQuantity(), item.getProduct().getCode());
             }
         }
 
-        order.setStatus(OrderStatus.valueOf(newStatus));
-
+        order.setStatus(targetStatus);
 
         return buildOrderResponseDTO(orderRepository.save(order));
+    }
+
+    /**
+     * Valida que la transición de estado sea válida según las reglas de negocio.
+     */
+    private void validateStatusTransition(Order order, OrderStatus newStatus) {
+        OrderStatus currentStatus = order.getStatus();
+        
+        // Regla: No se puede pasar a IN_PROGRESS sin mesero asignado
+        if (newStatus == OrderStatus.IN_PROGRESS && order.getWaiterUserName() == null) {
+            throw new RuntimeException("Cannot change to IN_PROGRESS without an assigned waiter. Current status: " + currentStatus);
+        }
+        
+        // Regla: CREATED solo puede ir a ASSIGNED (vía assignWaiter) o CANCELLED
+        if (currentStatus == OrderStatus.CREATED) {
+            if (newStatus != OrderStatus.ASSIGNED && newStatus != OrderStatus.CANCELLED) {
+                throw new RuntimeException("Order in CREATED status can only be ASSIGNED or CANCELLED. Use assignWaiter endpoint.");
+            }
+        }
+        
+        // Regla: ASSIGNED solo puede ir a IN_PROGRESS o CANCELLED
+        if (currentStatus == OrderStatus.ASSIGNED) {
+            if (newStatus != OrderStatus.IN_PROGRESS && newStatus != OrderStatus.CANCELLED) {
+                throw new RuntimeException("Order in ASSIGNED status can only move to IN_PROGRESS or CANCELLED");
+            }
+        }
+    }
+
+    @Override
+    public OrderResponseDTO assignWaiter(Long orderId, String waiterUsername) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundByIdException(ErrorMessagesService.ORDER_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
+        
+        // Validar que la orden esté en estado CREATED
+        if (order.getStatus() != OrderStatus.CREATED) {
+            throw new RuntimeException("Only orders in CREATED status can be assigned. Current status: " + order.getStatus());
+        }
+        
+        // Asignar mesero y cambiar estado
+        order.setWaiterUserName(waiterUsername);
+        order.setStatus(OrderStatus.ASSIGNED);
+        
+        return buildOrderResponseDTO(orderRepository.save(order));
+    }
+
+    @Override
+    public List<OrderForListResponseDTO> findUnassignedOrders() {
+        List<Order> orders = orderRepository.findByStatus(OrderStatus.CREATED);
+        return orders.stream()
+                .map(order -> modelMapper.map(order, OrderForListResponseDTO.class))
+                .toList();
+    }
+
+    @Override
+    public List<OrderForListResponseDTO> findMyAssignedOrders() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new RuntimeException("User must be authenticated to view assigned orders");
+        }
+        
+        String waiterUsername = authentication.getName();
+        List<Order> orders = orderRepository.findByWaiterUserNameAndStatus(waiterUsername, OrderStatus.ASSIGNED);
+        return orders.stream()
+                .map(order -> modelMapper.map(order, OrderForListResponseDTO.class))
+                .toList();
     }
 
 

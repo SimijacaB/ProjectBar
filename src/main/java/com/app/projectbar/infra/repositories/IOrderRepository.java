@@ -21,6 +21,12 @@ public interface IOrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByStatus(OrderStatus status);
 
+    /**
+     * Busca órdenes por mesero y estado específico.
+     * Útil para obtener órdenes asignadas a un mesero.
+     */
+    List<Order> findByWaiterUserNameAndStatus(String username, OrderStatus status);
+
     List<Order> findByTableNumberAndStatusNot(Integer tableNumber, OrderStatus status);
 
     /**

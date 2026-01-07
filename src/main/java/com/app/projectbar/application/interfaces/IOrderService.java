@@ -67,6 +67,34 @@ public interface IOrderService {
 
     OrderResponseDTO changeStatus(Long id, String newStatus);
 
+    /**
+     * Asigna un mesero a una orden en estado CREATED.
+     * Solo puede ser ejecutado por ADMIN.
+     * Cambia el estado de CREATED a ASSIGNED.
+     * 
+     * @param orderId ID de la orden
+     * @param waiterUsername Username del mesero a asignar
+     * @return Orden actualizada
+     * @throws RuntimeException si la orden no está en estado CREATED
+     */
+    OrderResponseDTO assignWaiter(Long orderId, String waiterUsername);
+
+    /**
+     * Obtiene todas las órdenes en estado CREATED (pendientes de asignación).
+     * Solo para uso de ADMIN.
+     * 
+     * @return Lista de órdenes sin mesero asignado
+     */
+    List<OrderForListResponseDTO> findUnassignedOrders();
+
+    /**
+     * Obtiene las órdenes asignadas al mesero autenticado que están en estado ASSIGNED.
+     * Estas son las órdenes que el mesero puede empezar a atender.
+     * 
+     * @return Lista de órdenes asignadas pendientes de atención
+     */
+    List<OrderForListResponseDTO> findMyAssignedOrders();
+
     void setOrdersAsReady(List<Order> orders);
 
     void validateIfOrderCanBeBilled(List<Order> orders);

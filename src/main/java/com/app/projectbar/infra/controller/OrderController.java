@@ -133,6 +133,39 @@ public class OrderController {
         return ResponseEntity.ok(orderService.changeStatus(idOrder, status));
     }
 
+    /**
+     * Asigna un mesero a una orden en estado CREATED.
+     * Solo puede ser ejecutado por ADMIN.
+     * Cambia el estado de CREATED a ASSIGNED.
+     */
+    @PatchMapping("/assign/{orderId}/{waiterUsername}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<OrderResponseDTO> assignWaiter(
+            @PathVariable Long orderId, 
+            @PathVariable String waiterUsername) {
+        return ResponseEntity.ok(orderService.assignWaiter(orderId, waiterUsername));
+    }
+
+    /**
+     * Obtiene todas las órdenes en estado CREATED (sin mesero asignado).
+     * Solo para ADMIN - para gestionar asignaciones.
+     */
+    @GetMapping("/unassigned")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OrderForListResponseDTO>> findUnassignedOrders() {
+        return ResponseEntity.ok(orderService.findUnassignedOrders());
+    }
+
+    /**
+     * Obtiene las órdenes asignadas al mesero autenticado en estado ASSIGNED.
+     * Estas son las órdenes que el mesero puede empezar a atender.
+     */
+    @GetMapping("/my-assigned")
+    public ResponseEntity<List<OrderForListResponseDTO>> findMyAssignedOrders() {
+        return ResponseEntity.ok(orderService.findMyAssignedOrders());
+    }
+
     @DeleteMapping("/delete/{id}")
     @Transactional
     public ResponseEntity <?> delete(@PathVariable Long id){

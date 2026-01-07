@@ -54,8 +54,10 @@ public class Order {
 
     @PrePersist
     protected void onCreate() {
+        // El estado se define en el servicio según el tipo de pedido
+        // Solo asignamos default si no viene especificado (para compatibilidad)
         if (status == null) {
-            status = OrderStatus.PENDING;
+            status = OrderStatus.CREATED;
         }
         if (date == null) {
             date = LocalDateTime.now();

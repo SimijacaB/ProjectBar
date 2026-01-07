@@ -74,6 +74,10 @@ public class SecurityConfig {
                 // ==================== ÓRDENES ====================
                 // Ver órdenes: Admin, Bartender, Waiter, Chef
                 .requestMatchers(HttpMethod.GET, "/api/order/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
+                // Órdenes sin asignar (CREATED): Solo Admin
+                .requestMatchers(HttpMethod.GET, "/api/order/unassigned").hasRole(RoleEnum.ADMIN.name())
+                // Asignar mesero a orden: Solo Admin
+                .requestMatchers(HttpMethod.PATCH, "/api/order/assign/**").hasRole(RoleEnum.ADMIN.name())
                 // Agregar items a orden: Admin y Waiter
                 .requestMatchers(HttpMethod.PUT, "/api/order/add-order-item/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.WAITER.name())
                 // Remover items de orden: Admin y Waiter
