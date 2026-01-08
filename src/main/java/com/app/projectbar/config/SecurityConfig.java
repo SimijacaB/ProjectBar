@@ -1,6 +1,6 @@
 package com.app.projectbar.config;
 
-import com.app.projectbar.domain.enums.RoleEnum;
+import com.app.projectbar.domain.enums.Role;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -48,56 +48,70 @@ public class SecurityConfig {
 
                 // ==================== INGREDIENTES ====================
                 // Ver ingredientes: Admin y Chef
-                .requestMatchers(HttpMethod.GET, "/api/ingredient/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.CHEF.name())
+                .requestMatchers(HttpMethod.GET, "/api/ingredient/**").hasAnyRole(Role.ADMIN.name(), Role.CHEF.name())
                 // Crear, modificar, eliminar ingredientes: Solo Admin
-                .requestMatchers(HttpMethod.POST, "/api/ingredient/**").hasRole(RoleEnum.ADMIN.name())
-                .requestMatchers(HttpMethod.PUT, "/api/ingredient/**").hasRole(RoleEnum.ADMIN.name())
-                .requestMatchers(HttpMethod.DELETE, "/api/ingredient/**").hasRole(RoleEnum.ADMIN.name())
+                .requestMatchers(HttpMethod.POST, "/api/ingredient/**").hasRole(Role.ADMIN.name())
+                .requestMatchers(HttpMethod.PUT, "/api/ingredient/**").hasRole(Role.ADMIN.name())
+                .requestMatchers(HttpMethod.DELETE, "/api/ingredient/**").hasRole(Role.ADMIN.name())
 
                 // ==================== PRODUCTOS ====================
                 // Crear productos: Solo Admin
-                .requestMatchers(HttpMethod.POST, "/api/product/**").hasRole(RoleEnum.ADMIN.name())
+                .requestMatchers(HttpMethod.POST, "/api/product/**").hasRole(Role.ADMIN.name())
                 // Modificar productos: Solo Admin
-                .requestMatchers(HttpMethod.PUT, "/api/product/**").hasRole(RoleEnum.ADMIN.name())
+                .requestMatchers(HttpMethod.PUT, "/api/product/**").hasRole(Role.ADMIN.name())
                 // Eliminar productos: Solo Admin
-                .requestMatchers(HttpMethod.DELETE, "/api/product/**").hasRole(RoleEnum.ADMIN.name())
+                .requestMatchers(HttpMethod.DELETE, "/api/product/**").hasRole(Role.ADMIN.name())
 
 
                 // ==================== INVENTARIO ====================
                 // Ver inventario: Admin, Bartender, Waiter, Chef
-                .requestMatchers(HttpMethod.GET, "/api/inventory/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
+                .requestMatchers(HttpMethod.GET, "/api/inventory/**").hasAnyRole(Role.ADMIN.name(), Role.BARTENDER.name(), Role.WAITER.name(), Role.CHEF.name())
                 // Modificar inventario: Solo Admin
-                .requestMatchers(HttpMethod.POST, "/api/inventory/**").hasRole(RoleEnum.ADMIN.name())
-                .requestMatchers(HttpMethod.PUT, "/api/inventory/**").hasRole(RoleEnum.ADMIN.name())
-                .requestMatchers(HttpMethod.DELETE, "/api/inventory/**").hasRole(RoleEnum.ADMIN.name())
+                .requestMatchers(HttpMethod.POST, "/api/inventory/**").hasRole(Role.ADMIN.name())
+                .requestMatchers(HttpMethod.PUT, "/api/inventory/**").hasRole(Role.ADMIN.name())
+                .requestMatchers(HttpMethod.DELETE, "/api/inventory/**").hasRole(Role.ADMIN.name())
 
                 // ==================== ÓRDENES ====================
                 // Ver órdenes: Admin, Bartender, Waiter, Chef
-                .requestMatchers(HttpMethod.GET, "/api/order/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
+                .requestMatchers(HttpMethod.GET, "/api/order/**").hasAnyRole(Role.ADMIN.name(), Role.BARTENDER.name(), Role.WAITER.name(), Role.CHEF.name())
                 // Órdenes sin asignar (CREATED): Solo Admin
-                .requestMatchers(HttpMethod.GET, "/api/order/unassigned").hasRole(RoleEnum.ADMIN.name())
+                .requestMatchers(HttpMethod.GET, "/api/order/unassigned").hasRole(Role.ADMIN.name())
                 // Asignar mesero a orden: Solo Admin
-                .requestMatchers(HttpMethod.PATCH, "/api/order/assign/**").hasRole(RoleEnum.ADMIN.name())
+                .requestMatchers(HttpMethod.PATCH, "/api/order/assign/**").hasRole(Role.ADMIN.name())
                 // Agregar items a orden: Admin y Waiter
-                .requestMatchers(HttpMethod.PUT, "/api/order/add-order-item/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.WAITER.name())
+                .requestMatchers(HttpMethod.PUT, "/api/order/add-order-item/**").hasAnyRole(Role.ADMIN.name(), Role.WAITER.name())
                 // Remover items de orden: Admin y Waiter
-                .requestMatchers(HttpMethod.PUT, "/api/order/remove-order-item/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.WAITER.name())
+                .requestMatchers(HttpMethod.PUT, "/api/order/remove-order-item/**").hasAnyRole(Role.ADMIN.name(), Role.WAITER.name())
                 // Cambiar estado de orden: Admin, Bartender, Waiter, Chef
-                .requestMatchers(HttpMethod.PATCH, "/api/order/change-status/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.BARTENDER.name(), RoleEnum.WAITER.name(), RoleEnum.CHEF.name())
+                .requestMatchers(HttpMethod.PATCH, "/api/order/change-status/**").hasAnyRole(Role.ADMIN.name(), Role.BARTENDER.name(), Role.WAITER.name(), Role.CHEF.name())
                 // Actualizar orden: Admin y Waiter
-                .requestMatchers(HttpMethod.PUT, "/api/order/update").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.WAITER.name())
+                .requestMatchers(HttpMethod.PUT, "/api/order/update").hasAnyRole(Role.ADMIN.name(), Role.WAITER.name())
                 // Eliminar orden: Solo Admin
-                .requestMatchers(HttpMethod.DELETE, "/api/order/**").hasRole(RoleEnum.ADMIN.name())
+                .requestMatchers(HttpMethod.DELETE, "/api/order/**").hasRole(Role.ADMIN.name())
+
+                // ==================== MESEROS ====================
+                // Ver meseros con órdenes activas: Solo Admin
+                .requestMatchers(HttpMethod.GET, "/api/waiters/**").hasRole(Role.ADMIN.name())
 
                 // ==================== FACTURAS (BILL) ====================
                 // Ver facturas: Admin
-                .requestMatchers(HttpMethod.GET, "/api/bill/**").hasRole(RoleEnum.ADMIN.name())
+                .requestMatchers(HttpMethod.GET, "/api/bill/**").hasRole(Role.ADMIN.name())
                 // Crear facturas: Admin y Waiter
-                .requestMatchers(HttpMethod.POST, "/api/bill/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.WAITER.name())
+                .requestMatchers(HttpMethod.POST, "/api/bill/**").hasAnyRole(Role.ADMIN.name(), Role.WAITER.name())
+
+                // ==================== MESAS (ORDER_TABLE) ====================
+                // Ver mesas: Todos los roles autenticados
+                .requestMatchers(HttpMethod.GET, "/api/order-table/**").hasAnyRole(Role.ADMIN.name(), Role.BARTENDER.name(), Role.WAITER.name(), Role.CHEF.name())
+                // Cambiar estado de mesa: Admin y Waiter
+                .requestMatchers(HttpMethod.PATCH, "/api/order-table/**/status").hasAnyRole(Role.ADMIN.name(), Role.WAITER.name())
+                // Crear, modificar, eliminar mesas: Solo Admin
+                .requestMatchers(HttpMethod.POST, "/api/order-table/**").hasRole(Role.ADMIN.name())
+                .requestMatchers(HttpMethod.PUT, "/api/order-table/**").hasRole(Role.ADMIN.name())
+                .requestMatchers(HttpMethod.DELETE, "/api/order-table/**").hasRole(Role.ADMIN.name())
 
                 // ==================== USUARIOS ====================
                 // Gestión de usuarios: Solo Admin
-                .requestMatchers("/api/user/**").hasRole(RoleEnum.ADMIN.name())
+                .requestMatchers("/api/user/**").hasRole(Role.ADMIN.name())
 
                 // Cualquier otra solicitud requiere autenticación
                 .anyRequest().authenticated()

@@ -15,6 +15,7 @@ import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
 import com.app.projectbar.domain.dto.orderItem.OrderItemResponseDTO;
 import com.app.projectbar.domain.enums.OrderStatus;
 import com.app.projectbar.infra.repositories.IOrderRepository;
+import com.app.projectbar.infra.repositories.IOrderTableRepository;
 import com.app.projectbar.infra.repositories.IProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -26,18 +27,28 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.app.projectbar.domain.enums.OrderTableStatus.*;
+
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements IOrderService {
 
     private final IOrderRepository orderRepository;
-    private final ModelMapper modelMapper;
     private final IProductRepository productRepository;
     private final IInventoryService inventoryService;
+    private final IOrderTableRepository orderTableRepository;
+
+    private final ModelMapper modelMapper;
+
 
 
     @Override
     public OrderResponseDTO save(OrderRequestDTO orderRequest) {
+        // Validar que la orden tenga al menos un producto
+        if (orderRequest.getOrderProducts() == null || orderRequest.getOrderProducts().isEmpty()) {
+            throw new RuntimeException("La orden debe tener al menos un producto");
+        }
+
         /*
         Dos escenarios según los requerimientos:
         1. Cliente hace pedido vía QR (sin autenticación) 
@@ -71,6 +82,25 @@ public class OrderServiceImpl implements IOrderService {
             // Pedido de cliente QR: inicia en CREATED (sin mesero)
             initialStatus = OrderStatus.CREATED;
             waiterId = null; // Asegurar que no tiene mesero
+        }
+
+        // Buscar la mesa asociada o crearla automáticamente si no existe
+        OrderTable orderTable = orderTableRepository.findByNumber(orderRequest.getTableNumber())
+                .orElseGet(() -> {
+                    // Crear mesa automáticamente si no existe (compatibilidad con flujo anterior)
+                    OrderTable newTable = OrderTable.builder()
+                            .number(orderRequest.getTableNumber())
+                            .capacity(4) // Capacidad por defecto
+                            .status(FREE)
+                            .build();
+                    return orderTableRepository.save(newTable);
+                });
+
+        // Cambiar el estado de la mesa a OCCUPIED cuando se crea la orden
+        // (permite múltiples órdenes en la misma mesa - varios clientes)
+        if (orderTable.getStatus() == FREE) {
+            orderTable.setStatus(OCCUPIED);
+            orderTableRepository.save(orderTable);
         }
 
         // Crear la orden sin los items primero
@@ -253,7 +283,7 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public Map<String, List<OrderForListResponseDTO>> findPendingOrdersByTableGroupedByClient(Integer tableNumber) {
-// 1. Obtener todas las órdenes de la mesa que NO estén facturadas
+        // 1. Obtener todas las órdenes de la mesa que NO estén facturadas
         List<Order> orders = orderRepository.findByTableNumberAndStatusNot(
                 tableNumber,
                 OrderStatus.BILLED

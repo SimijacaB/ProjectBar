@@ -52,4 +52,10 @@ public interface IOrderRepository extends JpaRepository<Order, Long> {
             @Param("endDate") LocalDateTime endDate
     );
 
+    /**
+     * Cuenta las órdenes activas de un mesero (estados: ASSIGNED, IN_PROGRESS, READY)
+     */
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.waiterUserName = :username AND o.status IN :statuses")
+    int countByWaiterUserNameAndStatusIn(@Param("username") String username, @Param("statuses") List<OrderStatus> statuses);
+
 }

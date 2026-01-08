@@ -1,6 +1,6 @@
 package com.app.projectbar.domain;
 
-import com.app.projectbar.domain.enums.RoleEnum;
+import com.app.projectbar.domain.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,7 +15,7 @@ import java.util.Objects;
 @AllArgsConstructor
 public class UserRoleId implements Serializable {
     private String username;
-    private RoleEnum role;
+    private Role role;
 
     @Override
     public int hashCode() {

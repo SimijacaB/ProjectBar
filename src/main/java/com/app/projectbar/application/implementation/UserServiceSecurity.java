@@ -1,7 +1,7 @@
 package com.app.projectbar.application.implementation;
 
 import com.app.projectbar.domain.enums.Permission;
-import com.app.projectbar.domain.enums.RoleEnum;
+import com.app.projectbar.domain.enums.Role;
 import com.app.projectbar.domain.UserEntity;
 import com.app.projectbar.infra.repositories.IUserRepository;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,6 +17,7 @@ import java.util.List;
 
 @Service
 public class UserServiceSecurity implements UserDetailsService {
+
     private final IUserRepository userRepository;
 
     public UserServiceSecurity(IUserRepository userRepository) {
@@ -28,8 +29,8 @@ public class UserServiceSecurity implements UserDetailsService {
 
         UserEntity userEntity = userRepository.findById(username).orElseThrow(() -> new UsernameNotFoundException ("User " + username + " not found."));
 
-        List<RoleEnum> roles = userEntity.getRoles().stream()
-                .map(userRoleEntity -> RoleEnum.valueOf(userRoleEntity.name()))
+        List<Role> roles = userEntity.getRoles().stream()
+                .map(userRoleEntity -> Role.valueOf(userRoleEntity.name()))
                 .toList();
 
         return User.builder()
@@ -41,9 +42,9 @@ public class UserServiceSecurity implements UserDetailsService {
                 .build();
     }
 
-    private List<GrantedAuthority> grantedAuthorities(List<RoleEnum> roles) {
+    private List<GrantedAuthority> grantedAuthorities(List<Role> roles) {
         List<GrantedAuthority> authorities = new ArrayList<>(roles.size());
-        for (RoleEnum role : roles) {
+        for (Role role : roles) {
             authorities.add(new SimpleGrantedAuthority("ROLE_" + role.name()));
 
             for (Permission permission : this.getPermissions(role)) {
@@ -53,8 +54,8 @@ public class UserServiceSecurity implements UserDetailsService {
         return authorities;
     }
 
-    private List<Permission> getPermissions(RoleEnum role) {
-        if (role == RoleEnum.ADMIN || role == RoleEnum.WAITER) {
+    private List<Permission> getPermissions(Role role) {
+        if (role == Role.ADMIN || role == Role.WAITER) {
             return List.of(Permission.READ, Permission.WRITE);
         }
         return List.of();

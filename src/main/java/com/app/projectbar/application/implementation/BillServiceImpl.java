@@ -15,6 +15,7 @@ import com.app.projectbar.domain.dto.bill.BillReportDTO;
 import com.app.projectbar.domain.dto.orderItem.ItemReportDTO;
 import com.app.projectbar.infra.repositories.IBillRepository;
 import com.app.projectbar.infra.repositories.IOrderRepository;
+import com.app.projectbar.infra.repositories.IOrderTableRepository;
 import lombok.RequiredArgsConstructor;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
@@ -40,6 +41,7 @@ public class BillServiceImpl implements IBillService, IBillReportService {
     private final IOrderRepository orderRepository;
     private final ModelMapper modelMapper;
     private final IOrderService orderService;
+    private final IOrderTableRepository orderTableRepository;
 
     @Override
     public BillDTO findById(Long id) {
@@ -59,6 +61,26 @@ public class BillServiceImpl implements IBillService, IBillReportService {
             throw new BillNotFoundByNumberException(
                     ErrorMessagesService.BILL_NOT_FOUND_BY_NUMBER_EXCEPTION.getMessage());
         }
+    }
+
+    /**
+     * Libera una mesa si todas sus órdenes están facturadas.
+     */
+    private void freeOrderTableIfAllOrdersBilled(Integer tableNumber) {
+        // Buscar la mesa por número
+        orderTableRepository.findByNumber(tableNumber).ifPresent(orderTable -> {
+            // Verificar si hay órdenes activas (no facturadas) en esta mesa
+            List<Order> activeOrders = orderRepository.findByTableNumberAndStatusNot(
+                    tableNumber,
+                    com.app.projectbar.domain.enums.OrderStatus.BILLED
+            );
+
+            // Si no hay órdenes activas, liberar la mesa
+            if (activeOrders.isEmpty() && orderTable.getStatus() == com.app.projectbar.domain.enums.OrderTableStatus.OCCUPIED) {
+                orderTable.setStatus(com.app.projectbar.domain.enums.OrderTableStatus.FREE);
+                orderTableRepository.save(orderTable);
+            }
+        });
     }
 
     private BillDTO save(Bill bill, List<Order> orders) {
@@ -116,7 +138,12 @@ public class BillServiceImpl implements IBillService, IBillReportService {
 
         billResponse.setClientName(clientName);
 
-        return this.save(modelMapper.map(billResponse, Bill.class), ordersByTable);
+        BillDTO savedBill = this.save(modelMapper.map(billResponse, Bill.class), ordersByTable);
+
+        // Verificar si todas las órdenes de la mesa están facturadas y liberar la mesa
+        freeOrderTableIfAllOrdersBilled(tableNumber);
+
+        return savedBill;
 
     }
 
@@ -206,10 +233,7 @@ public class BillServiceImpl implements IBillService, IBillReportService {
     @Override
     public byte[] generateBillPDF(Long billId) {
 
-
-
         try {
-
             // Obtener la factura y convertirla a DTO
             Bill bill = billRepository.findById(billId)
                     .orElseThrow(() -> {

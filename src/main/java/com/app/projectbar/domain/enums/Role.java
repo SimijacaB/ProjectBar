@@ -1,6 +1,6 @@
 package com.app.projectbar.domain.enums;
 
-public enum RoleEnum {
+public enum Role {
     ADMIN,
     BARTENDER,
     WAITER,

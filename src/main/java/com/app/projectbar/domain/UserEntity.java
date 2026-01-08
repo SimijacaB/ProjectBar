@@ -1,6 +1,6 @@
 package com.app.projectbar.domain;
 
-import com.app.projectbar.domain.enums.RoleEnum;
+import com.app.projectbar.domain.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -33,11 +33,11 @@ public class UserEntity {
     @Column(nullable = false, columnDefinition = "TINYINT")
     private Boolean disabled;
 
-    @ElementCollection(targetClass = RoleEnum.class, fetch = FetchType.EAGER)
+    @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     @CollectionTable(name = "user_role", joinColumns = @JoinColumn(name = "username"))
     @Column(name = "role")
-    private Set<RoleEnum> roles;
+    private Set<Role> roles;
 
 
 }

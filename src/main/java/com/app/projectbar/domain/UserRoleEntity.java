@@ -1,6 +1,6 @@
 package com.app.projectbar.domain;
 
-import com.app.projectbar.domain.enums.RoleEnum;
+import com.app.projectbar.domain.enums.Role;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,7 +22,7 @@ public class UserRoleEntity {
     @Id
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private RoleEnum role;
+    private Role role;
 
     @Column(name = "granted_date", nullable = false, columnDefinition = "DATETIME")
     private LocalDateTime grantedDate;
