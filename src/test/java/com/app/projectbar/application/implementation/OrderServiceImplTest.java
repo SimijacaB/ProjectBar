@@ -1,14 +1,20 @@
 package com.app.projectbar.application.implementation;
 
 import com.app.projectbar.domain.Order;
+import com.app.projectbar.domain.OrderTable;
+import com.app.projectbar.domain.Product;
 import com.app.projectbar.domain.dto.order.OrderForListResponseDTO;
 import com.app.projectbar.domain.dto.order.OrderRequestDTO;
 import com.app.projectbar.domain.dto.order.OrderResponseDTO;
 import com.app.projectbar.domain.dto.order.UpdateOrderDTO;
+import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
+import com.app.projectbar.domain.dto.orderItem.OrderItemResponseDTO;
 import com.app.projectbar.domain.enums.OrderStatus;
+import com.app.projectbar.domain.enums.OrderTableStatus;
 import com.app.projectbar.infra.repositories.IInventoryRepository;
 import com.app.projectbar.infra.repositories.IOrderItemRepository;
 import com.app.projectbar.infra.repositories.IOrderRepository;
+import com.app.projectbar.infra.repositories.IOrderTableRepository;
 import com.app.projectbar.infra.repositories.IProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +32,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,6 +42,8 @@ class OrderServiceImplTest {
     private  IOrderRepository orderRepository;
     @Mock
     private  IOrderItemRepository orderItemRepository;
+    @Mock
+    private  IOrderTableRepository orderTableRepository;
     @Mock
     private  ModelMapper modelMapper;
     @Mock
@@ -66,7 +75,7 @@ class OrderServiceImplTest {
         order.setClientName(orderRequest.getClientName());
         order.setTableNumber(orderRequest.getTableNumber());
         order.setDate(LocalDateTime.now());
-        order.setStatus(OrderStatus.PENDING);
+        order.setStatus(OrderStatus.IN_PROGRESS);
         order.setNotes(orderRequest.getNotes());
         order.setOrderItems(new ArrayList<>()); // Initialize to prevent NPE
 
@@ -75,7 +84,7 @@ class OrderServiceImplTest {
         order2.setClientName("Yesika");
         order2.setTableNumber(2);
         order2.setDate(LocalDateTime.now());
-        order2.setStatus(OrderStatus.PENDING);
+        order2.setStatus(OrderStatus.IN_PROGRESS);
         order2.setNotes("Notes2");
         order2.setOrderItems(new ArrayList<>()); // Initialize to prevent NPE
 
@@ -94,7 +103,7 @@ class OrderServiceImplTest {
         OrderListResponse.setClientName("Client1");
         OrderListResponse.setTableNumber(1);
         OrderListResponse.setDate(LocalDateTime.now());
-        OrderListResponse.setStatus(OrderStatus.PENDING);
+        OrderListResponse.setStatus(OrderStatus.IN_PROGRESS);
         OrderListResponse.setNotes("Notes1");
 
         OrderListResponse2 = new OrderForListResponseDTO();
@@ -102,7 +111,7 @@ class OrderServiceImplTest {
         OrderListResponse2.setClientName("Client2");
         OrderListResponse2.setTableNumber(2);
         OrderListResponse2.setDate(LocalDateTime.now());
-        OrderListResponse2.setStatus(OrderStatus.PENDING);
+        OrderListResponse2.setStatus(OrderStatus.IN_PROGRESS);
         OrderListResponse2.setNotes("Notes2");
 
         orderResponses = Arrays.asList(OrderListResponse, OrderListResponse2);
@@ -129,13 +138,62 @@ class OrderServiceImplTest {
     }
 
     @Test
-    void testSave(){
-        //  ------- WHEN --------
+    void testSave() {
+        // 1. Crear el DTO del producto/ítem que va dentro de la orden
+        OrderItemRequestDTO itemRequest = OrderItemRequestDTO.builder()
+                .idProduct(1L)
+                .quantity(2)
+                .productName("Margarita")
+                .build();
+
+        // 2. Configurar el OrderRequest con su lista de productos
+        orderRequest = OrderRequestDTO.builder()
+                .clientName("Santiago")
+                .tableNumber(3)
+                .orderProducts(List.of(itemRequest))
+                .build();
+
+        // 3. Crear mock de OrderTable
+        OrderTable orderTable = OrderTable.builder()
+                .id(1L)
+                .number(3)
+                .capacity(4)
+                .status(OrderTableStatus.FREE)
+                .build();
+
+        // 4. Crear mock de Product
+        Product product = Product.builder()
+                .id(1L)
+                .name("Margarita")
+                .price(15.0)
+                .build();
+
+        // 5. Configurar el OrderResponseDTO esperado
+        OrderItemResponseDTO itemResponse = new OrderItemResponseDTO();
+        itemResponse.setProductName("Margarita");
+        itemResponse.setQuantity(2);
+        itemResponse.setUnitPrice(15.0);
+
+        OrderResponseDTO expectedResponse = new OrderResponseDTO();
+        expectedResponse.setId(1L);
+        expectedResponse.setClientName("Santiago");
+        expectedResponse.setTableNumber(3);
+        expectedResponse.setOrderItemList(List.of(itemResponse));
+
+        // 6. Configurar mocks
+        when(orderTableRepository.findByNumber(3)).thenReturn(Optional.of(orderTable));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+        when(modelMapper.map(any(Order.class), eq(OrderResponseDTO.class))).thenReturn(expectedResponse);
+
+        // ------- WHEN --------
         OrderResponseDTO result = orderService.save(orderRequest);
 
         // --------- THEN ------------
+        assertNotNull(result);
         assertEquals("Santiago", result.getClientName());
         assertEquals(3, result.getTableNumber());
+        assertNotNull(result.getOrderItemList());
     }
 
     @Test
