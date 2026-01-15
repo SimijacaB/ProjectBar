@@ -1,5 +1,6 @@
 package com.app.projectbar.application.implementation;
 
+import com.app.projectbar.application.mapper.IngredientMapper;
 import com.app.projectbar.domain.Ingredient;
 import com.app.projectbar.domain.dto.ingredient.IngredientRequestDTO;
 import com.app.projectbar.domain.dto.ingredient.IngredientResponseDTO;
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.modelmapper.ModelMapper;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +26,7 @@ class IngredientServiceImplTest {
     @Mock
     private IIngredientRepository ingredientRepository;
     @Mock
-    private ModelMapper modelMapper;
+    private IngredientMapper ingredientMapper;
     @InjectMocks
     private IngredientServiceImpl ingredientService;
 
@@ -66,9 +66,11 @@ class IngredientServiceImplTest {
 
         when(this.ingredientRepository.findAll()).thenReturn(List.of(ingredient1, ingredient2, ingredient3));
 
-        when(modelMapper.map(ingredient1, IngredientResponseDTO.class)).thenReturn(ingredientResponseDTO1);
-        when(modelMapper.map(ingredient2, IngredientResponseDTO.class)).thenReturn(ingredientResponseDTO2);
-        when(modelMapper.map(ingredient3, IngredientResponseDTO.class)).thenReturn(ingredientResponseDTO3);
+        when(ingredientMapper.toResponseDTO(ingredient1)).thenReturn(ingredientResponseDTO1);
+        when(ingredientMapper.toResponseDTO(ingredient2)).thenReturn(ingredientResponseDTO2);
+        when(ingredientMapper.toResponseDTO(ingredient3)).thenReturn(ingredientResponseDTO3);
+        when(ingredientMapper.toResponseDTOList(List.of(ingredient1, ingredient2, ingredient3)))
+                .thenReturn(List.of(ingredientResponseDTO1, ingredientResponseDTO2, ingredientResponseDTO3));
     }
 
     @Test
@@ -170,9 +172,9 @@ class IngredientServiceImplTest {
         ingredientResponseDTO.setName("Brandy");
         ingredientResponseDTO.setUnitOfMeasure("ML");
 
-        when(modelMapper.map(ingredientRequestDTO, Ingredient.class)).thenReturn(ingredient);
+        when(ingredientMapper.toEntity(ingredientRequestDTO)).thenReturn(ingredient);
         when(ingredientRepository.save(ingredient)).thenReturn(ingredient);
-        when(modelMapper.map(ingredient, IngredientResponseDTO.class)).thenReturn(ingredientResponseDTO);
+        when(ingredientMapper.toResponseDTO(ingredient)).thenReturn(ingredientResponseDTO);
 
         // When
         IngredientResponseDTO result = ingredientService.save(ingredientRequestDTO);

@@ -7,19 +7,20 @@ import com.app.projectbar.application.exception.bill.BillNotFoundByNumberExcepti
 import com.app.projectbar.application.interfaces.IBillReportService;
 import com.app.projectbar.application.interfaces.IBillService;
 import com.app.projectbar.application.interfaces.IOrderService;
+import com.app.projectbar.application.mapper.BillMapper;
 import com.app.projectbar.domain.Bill;
 import com.app.projectbar.domain.Order;
 import com.app.projectbar.domain.OrderItem;
 import com.app.projectbar.domain.dto.bill.BillDTO;
 import com.app.projectbar.domain.dto.bill.BillReportDTO;
-import com.app.projectbar.domain.dto.orderItem.ItemReportDTO;
+import com.app.projectbar.domain.enums.OrderStatus;
+import com.app.projectbar.domain.enums.OrderTableStatus;
 import com.app.projectbar.infra.repositories.IBillRepository;
 import com.app.projectbar.infra.repositories.IOrderRepository;
 import com.app.projectbar.infra.repositories.IOrderTableRepository;
 import lombok.RequiredArgsConstructor;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
-import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +28,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,48 +40,65 @@ public class BillServiceImpl implements IBillService, IBillReportService {
 
     private final IBillRepository billRepository;
     private final IOrderRepository orderRepository;
-    private final ModelMapper modelMapper;
+    private final BillMapper billMapper;
     private final IOrderService orderService;
     private final IOrderTableRepository orderTableRepository;
 
     @Override
     public BillDTO findById(Long id) {
-        Optional<Bill> billOptional = billRepository.findById(id);
-        if (billOptional.isEmpty()) {
-            throw new BillNotFoundByIdException(ErrorMessagesService.BILL_NOT_FOUND_BY_ID_EXCEPTION.getMessage());
-        }
-        return modelMapper.map(billOptional.get(), BillDTO.class);
+        var bill = billRepository.findById(id)
+                .orElseThrow(() -> new BillNotFoundByIdException(ErrorMessagesService.BILL_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
+        return billMapper.toDTO(bill);
     }
 
     @Override
     public BillDTO findByNumber(String number) {
-        Optional<Bill> billOptional = billRepository.findByBillNumber(number);
-        if (billOptional.isPresent()) {
-            return modelMapper.map(billOptional.get(), BillDTO.class);
-        } else {
-            throw new BillNotFoundByNumberException(
-                    ErrorMessagesService.BILL_NOT_FOUND_BY_NUMBER_EXCEPTION.getMessage());
-        }
+        var bill = billRepository.findByBillNumber(number)
+                .orElseThrow(() -> new BillNotFoundByNumberException(ErrorMessagesService.BILL_NOT_FOUND_BY_NUMBER_EXCEPTION.getMessage()));
+        return billMapper.toDTO(bill);
     }
 
     /**
-     * Libera una mesa si todas sus órdenes están facturadas.
+     * Libera una mesa si todas sus órdenes están facturadas (estado BILLED).
+     * La mesa solo se libera si:
+     * 1. Existe al menos una orden en la mesa
+     * 2. TODAS las órdenes de la mesa tienen estado BILLED
      */
     private void freeOrderTableIfAllOrdersBilled(Integer tableNumber) {
         // Buscar la mesa por número
         orderTableRepository.findByNumber(tableNumber).ifPresent(orderTable -> {
-            // Verificar si hay órdenes activas (no facturadas) en esta mesa
-            List<Order> activeOrders = orderRepository.findByTableNumberAndStatusNot(
-                    tableNumber,
-                    com.app.projectbar.domain.enums.OrderStatus.BILLED
-            );
+            // Obtener todas las órdenes de esta mesa
+            List<Order> allOrdersInTable = orderRepository.findByTableNumber(tableNumber);
+            
+            // Si no hay órdenes en la mesa, no hacer nada
+            if (allOrdersInTable.isEmpty()) {
+                return;
+            }
+            
+            // Verificar que TODAS las órdenes estén en estado BILLED
+            boolean allOrdersBilled = allOrdersInTable.stream()
+                    .allMatch(order -> order.getStatus() == OrderStatus.BILLED);
 
-            // Si no hay órdenes activas, liberar la mesa
-            if (activeOrders.isEmpty() && orderTable.getStatus() == com.app.projectbar.domain.enums.OrderTableStatus.OCCUPIED) {
-                orderTable.setStatus(com.app.projectbar.domain.enums.OrderTableStatus.FREE);
+            // Solo liberar la mesa si todas las órdenes están facturadas y la mesa está ocupada
+            if (allOrdersBilled && orderTable.getStatus() == OrderTableStatus.OCCUPIED) {
+                orderTable.setStatus(OrderTableStatus.FREE);
                 orderTableRepository.save(orderTable);
+                log.info("Mesa {} liberada automáticamente - todas sus órdenes están en estado BILLED", tableNumber);
             }
         });
+    }
+
+    /**
+     * Verifica y libera las mesas de todas las órdenes facturadas.
+     * Obtiene los números de mesa únicos de las órdenes y verifica cada una.
+     */
+    private void freeTablesIfAllOrdersBilled(List<Order> orders) {
+        // Obtener los números de mesa únicos de las órdenes (excluyendo null para órdenes sin mesa)
+        orders.stream()
+                .map(Order::getTableNumber)
+                .filter(Objects::nonNull)
+                .distinct()
+                .forEach(this::freeOrderTableIfAllOrdersBilled);
     }
 
     private BillDTO save(Bill bill, List<Order> orders) {
@@ -94,26 +112,20 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         String formattedBillNumber = String.format("FE-%06d", savedBill.getId());
         savedBill.setBillNumber(formattedBillNumber);
 
-        return modelMapper.map(savedBill, BillDTO.class);
+        return billMapper.toDTO(savedBill);
     }
 
     @Override
     public List<BillDTO> findAll() {
         List<Bill> listBill = billRepository.findAll();
-        List<BillDTO> dtoList = new ArrayList<>();
-        for (Bill bill : listBill) {
-            BillDTO dto = modelMapper.map(bill, BillDTO.class);
-            dtoList.add(dto);
-        }
-        return dtoList;
+        return billMapper.toDTOList(listBill);
     }
 
     @Override
     public void delete(Long billNumber) {
-        Optional<Bill> bill = billRepository.findById(billNumber);
-        if (bill.isEmpty()) {
-            throw new BillNotFoundByIdException(ErrorMessagesService.BILL_NOT_FOUND_BY_ID_EXCEPTION.getMessage());
-        }
+        var bill = billRepository.findById(billNumber)
+                .orElseThrow(() -> new BillNotFoundByIdException(ErrorMessagesService.BILL_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
+
         billRepository.deleteById(billNumber);
 
     }
@@ -138,7 +150,7 @@ public class BillServiceImpl implements IBillService, IBillReportService {
 
         billResponse.setClientName(clientName);
 
-        BillDTO savedBill = this.save(modelMapper.map(billResponse, Bill.class), ordersByTable);
+        BillDTO savedBill = this.save(billMapper.toEntity(billResponse), ordersByTable);
 
         // Verificar si todas las órdenes de la mesa están facturadas y liberar la mesa
         freeOrderTableIfAllOrdersBilled(tableNumber);
@@ -151,7 +163,7 @@ public class BillServiceImpl implements IBillService, IBillReportService {
     public BillDTO generateBillByClient(String clientName) {
         List<Order> ordersByClientName = orderRepository.findByClientName(clientName);
 
-        List<Long> orderIds = ordersByClientName.stream().map(order -> order.getId()).toList();
+        List<Long> orderIds = ordersByClientName.stream().map(Order::getId).toList();
 
         // Aquí válido que las órdenes existan
         List<Order> selectedOrders = orderService.getExistingOrdersOrThrow(orderIds);
@@ -166,7 +178,12 @@ public class BillServiceImpl implements IBillService, IBillReportService {
 
         billResponse.setClientName(clientName);
 
-        return this.save(modelMapper.map(billResponse, Bill.class), ordersByClientName);
+        BillDTO savedBill = this.save(billMapper.toEntity(billResponse), ordersByClientName);
+
+        // Verificar y liberar las mesas de las órdenes facturadas
+        freeTablesIfAllOrdersBilled(ordersByClientName);
+
+        return savedBill;
 
     }
 
@@ -184,7 +201,12 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         BillDTO billResponse = generateItemForBill(selectedOrders);
         billResponse.setClientName(selectedOrders.get(0).getClientName());
 
-        return this.save(modelMapper.map(billResponse, Bill.class), selectedOrders);
+        BillDTO savedBill = this.save(billMapper.toEntity(billResponse), selectedOrders);
+
+        // Verificar y liberar las mesas de las órdenes facturadas
+        freeTablesIfAllOrdersBilled(selectedOrders);
+
+        return savedBill;
     }
 
     public BillDTO generateItemForBill(List<Order> orders) {
@@ -221,7 +243,7 @@ public class BillServiceImpl implements IBillService, IBillReportService {
                 .createdBy(SecurityContextHolder.getContext().getAuthentication().getName())
                 .build();
 
-        return modelMapper.map(bill, BillDTO.class);
+        return billMapper.toDTO(bill);
     }
 
     private Double calculateTotalAmount(List<OrderItem> orderItems) {
@@ -241,7 +263,7 @@ public class BillServiceImpl implements IBillService, IBillReportService {
                         return new ResourceNotFoundException("Bill not found with id: " + billId);
                     });
 
-            BillReportDTO billDTO = convertToBillReportDTO(bill);
+            BillReportDTO billDTO = billMapper.toReportDTO(bill);
 
             // Cargar el template del reporte
             InputStream reportStream = getClass().getResourceAsStream("/reports/templates/invoice.jrxml");
@@ -249,7 +271,6 @@ public class BillServiceImpl implements IBillService, IBillReportService {
                 throw new RuntimeException("Report template not found");
             }
 
-            JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
 
             // Preparar los parámetros
             Map<String, Object> parameters = new HashMap<>();
@@ -301,25 +322,5 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         }
     }
 
-    private BillReportDTO convertToBillReportDTO(Bill bill) {
-        List<ItemReportDTO> items = bill.getOrders().stream()
-            .flatMap(order -> order.getOrderItems().stream()
-                .map(item -> ItemReportDTO.builder()
-                    .productName(item.getProduct().getName())
-                    .quantity(item.getQuantity())
-                    .price(item.getProduct().getPrice())
-                    .subtotal(item.getQuantity() * item.getProduct().getPrice())
-                    .build()))
-            .collect(Collectors.toList());
 
-        return BillReportDTO.builder()
-            .id(bill.getId())
-            .clientName(bill.getClientName())
-            .billingDate(bill.getBillingDate())
-            .billNumber(bill.getBillNumber())
-            .totalAmount(bill.getTotalAmount())
-            .createdBy(bill.getCreatedBy())
-            .items(items)
-            .build();
-    }
 }

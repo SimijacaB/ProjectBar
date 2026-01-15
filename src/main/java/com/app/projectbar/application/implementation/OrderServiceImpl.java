@@ -6,6 +6,7 @@ import com.app.projectbar.application.exception.orders.OrdersAlreadyBilledExcept
 import com.app.projectbar.application.exception.orders.OrdersNotFoundByStatusException;
 import com.app.projectbar.application.interfaces.IInventoryService;
 import com.app.projectbar.application.interfaces.IOrderService;
+import com.app.projectbar.application.mapper.OrderMapper;
 import com.app.projectbar.domain.*;
 import com.app.projectbar.domain.dto.order.OrderForListResponseDTO;
 import com.app.projectbar.domain.dto.order.OrderRequestDTO;
@@ -18,7 +19,6 @@ import com.app.projectbar.infra.repositories.IOrderRepository;
 import com.app.projectbar.infra.repositories.IOrderTableRepository;
 import com.app.projectbar.infra.repositories.IProductRepository;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +38,7 @@ public class OrderServiceImpl implements IOrderService {
     private final IInventoryService inventoryService;
     private final IOrderTableRepository orderTableRepository;
 
-    private final ModelMapper modelMapper;
+    private final OrderMapper orderMapper;
 
 
 
@@ -147,40 +147,24 @@ public class OrderServiceImpl implements IOrderService {
             newOrder.setValueToPay(totalValue);
         }
 
-        newOrder = orderRepository.save(newOrder);
-        return buildOrderResponseDTO(newOrder);
+        return orderMapper.toResponseDTO(orderRepository.save(newOrder));
     }
 
     @Override
     public List<OrderForListResponseDTO> findAll() {
         var orders = orderRepository.findAll();
-        return orders.stream()
-                .map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
+        return orderMapper.toListDTOList(orders);
     }
 
-        @Override
-        public OrderResponseDTO findById(Long id) {
-            Order order = orderRepository.findById(id)
-                    .orElseThrow(() -> new OrderNotFoundByIdException(ErrorMessagesService.ORDER_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
+    @Override
+    public OrderResponseDTO findById(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundByIdException(
+                        ErrorMessagesService.ORDER_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
 
-            //Se mapea la lista de orderItems y se cambia la lista de OrderResponse de OrderItem a OrderItemResponseDTO
+        return orderMapper.toResponseDTO(order);
+    }
 
-            OrderResponseDTO orderResponseDTO = modelMapper.map(order, OrderResponseDTO.class);
-            List<OrderItemResponseDTO> orderItemDTOs = order.getOrderItems().stream()
-                    .map(orderItem -> {
-                        OrderItemResponseDTO dto = new OrderItemResponseDTO();
-                        dto.setId(orderItem.getId());
-                        dto.setProductName(orderItem.getProduct().getName());
-                        dto.setQuantity(orderItem.getQuantity());
-                        dto.setUnitPrice(orderItem.getProduct().getPrice());
-                        dto.setTotalPrice(orderItem.getProduct().getPrice() * orderItem.getQuantity());
-                        return dto;
-                    })
-                    .collect(Collectors.toList());
-            orderResponseDTO.setOrderItemList(orderItemDTOs);
-
-            return orderResponseDTO;
-        }
 
     @Override
     public OrderResponseDTO updateOrder(UpdateOrderDTO updateOrderDTO) {
@@ -191,9 +175,7 @@ public class OrderServiceImpl implements IOrderService {
         order.setTableNumber(updateOrderDTO.getTableNumber());
         order.setNotes(updateOrderDTO.getNotes());
 
-        orderRepository.save(order);
-
-        return modelMapper.map(order, OrderResponseDTO.class);
+        return orderMapper.toResponseDTO(orderRepository.save(order));
     }
 
     @Override
@@ -204,20 +186,20 @@ public class OrderServiceImpl implements IOrderService {
     @Override
     public List<OrderForListResponseDTO> findByClientName(String name) {
         List<Order> orders = orderRepository.findByClientName(name);
-        return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
+        return orderMapper.toListDTOList(orders);
     }
 
     @Override
     public List<OrderForListResponseDTO> findByTableNumber(Integer tableNumber) {
         List<Order> orders = orderRepository.findByTableNumber(tableNumber);
-        return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
+        return orderMapper.toListDTOList(orders);
     }
 
     @Override
     public List<OrderForListResponseDTO> findByWaiterId(String id) {
 
         List<Order> orders = orderRepository.findByWaiterUserName(id);
-        return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
+        return orderMapper.toListDTOList(orders);
     }
 
     @Override
@@ -232,9 +214,7 @@ public class OrderServiceImpl implements IOrderService {
 
         String waiterUsername = authentication.getName();
         List<Order> orders = orderRepository.findByWaiterUserName(waiterUsername);
-        return orders.stream()
-                .map(order -> modelMapper.map(order, OrderForListResponseDTO.class))
-                .toList();
+        return orderMapper.toListDTOList(orders);
     }
 
     @Override
@@ -249,9 +229,7 @@ public class OrderServiceImpl implements IOrderService {
 
         String waiterUsername = authentication.getName();
         List<Order> orders = orderRepository.findByWaiterUserNameAndDateBetween(waiterUsername, startDate, endDate);
-        return orders.stream()
-                .map(order -> modelMapper.map(order, OrderForListResponseDTO.class))
-                .toList();
+        return orderMapper.toListDTOList(orders);
     }
 
     @Override
@@ -261,15 +239,13 @@ public class OrderServiceImpl implements IOrderService {
         LocalDateTime endOfDay = date.atTime(23, 59, 59, 999999999);
         
         List<Order> orders = orderRepository.findByDateBetween(startOfDay, endOfDay);
-        return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
+        return orderMapper.toListDTOList(orders);
     }
 
     @Override
     public List<OrderForListResponseDTO> findByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         List<Order> orders = orderRepository.findByDateBetween(startDate, endDate);
-        return orders.stream()
-                .map(order -> modelMapper.map(order, OrderForListResponseDTO.class))
-                .toList();
+        return orderMapper.toListDTOList(orders);
     }
 
     @Override
@@ -278,7 +254,7 @@ public class OrderServiceImpl implements IOrderService {
         if(orders.isEmpty()){
             throw new OrdersNotFoundByStatusException(ErrorMessagesService.ORDERS_NOT_FOUND_BY_STATUS_EXCEPTION.getMessage());
         }
-        return orders.stream().map(order -> modelMapper.map(order, OrderForListResponseDTO.class)).toList();
+        return orderMapper.toListDTOList(orders);
     }
 
     @Override
@@ -291,7 +267,7 @@ public class OrderServiceImpl implements IOrderService {
 
         // 2. Agrupar por nombre del cliente
         return orders.stream()
-                .map(order -> modelMapper.map(order, OrderForListResponseDTO.class))
+                .map(orderMapper::toListDTO)
                 .collect(Collectors.groupingBy(OrderForListResponseDTO::getClientName));
 
     }
@@ -301,7 +277,7 @@ public class OrderServiceImpl implements IOrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
-        // ✅ VALIDACIÓN: No permitir agregar items a órdenes entregadas
+        // VALIDACIÓN: No permitir agregar items a órdenes entregadas
         if (OrderStatus.DELIVERED.equals(order.getStatus())) {
             throw new RuntimeException("Cannot add items to a delivered order. Please create a new order.");
         }
@@ -340,10 +316,9 @@ public class OrderServiceImpl implements IOrderService {
         // Recalcular total (Streams son buenos aquí para legibilidad)
         updateOrderTotalValue(order);
 
-        Order updatedOrder = orderRepository.save(order);
 
         // Construcción de respuesta optimizada
-        return buildOrderResponseDTO(updatedOrder);
+        return orderMapper.toResponseDTO(orderRepository.save(order));
     }
 
     @Override
@@ -364,9 +339,7 @@ public class OrderServiceImpl implements IOrderService {
 
         updateOrderTotalValue(order);
 
-        Order updatedOrder = orderRepository.save(order);
-
-        return buildOrderResponseDTO(updatedOrder);
+        return orderMapper.toResponseDTO(orderRepository.save(order));
     }
 
     @Override
@@ -389,7 +362,7 @@ public class OrderServiceImpl implements IOrderService {
 
         order.setStatus(targetStatus);
 
-        return buildOrderResponseDTO(orderRepository.save(order));
+        return orderMapper.toResponseDTO(orderRepository.save(order));
     }
 
     /**
@@ -432,15 +405,13 @@ public class OrderServiceImpl implements IOrderService {
         order.setWaiterUserName(waiterUsername);
         order.setStatus(OrderStatus.ASSIGNED);
         
-        return buildOrderResponseDTO(orderRepository.save(order));
+        return orderMapper.toResponseDTO(orderRepository.save(order));
     }
 
     @Override
     public List<OrderForListResponseDTO> findUnassignedOrders() {
         List<Order> orders = orderRepository.findByStatus(OrderStatus.CREATED);
-        return orders.stream()
-                .map(order -> modelMapper.map(order, OrderForListResponseDTO.class))
-                .toList();
+        return orderMapper.toListDTOList(orders);
     }
 
     @Override
@@ -454,25 +425,9 @@ public class OrderServiceImpl implements IOrderService {
         
         String waiterUsername = authentication.getName();
         List<Order> orders = orderRepository.findByWaiterUserNameAndStatus(waiterUsername, OrderStatus.ASSIGNED);
-        return orders.stream()
-                .map(order -> modelMapper.map(order, OrderForListResponseDTO.class))
-                .toList();
+        return orderMapper.toListDTOList(orders);
     }
 
-
-    private List<OrderItemResponseDTO> getOrderItemResponse(Order updatedOrder){
-        // 7. Mapear la lista de OrderItems a OrderItemResponseDTO
-
-        return updatedOrder.getOrderItems().stream()
-                .map(orderItem -> OrderItemResponseDTO.builder()
-                        .id(orderItem.getId())
-                        .productName(orderItem.getProduct().getName())
-                        .quantity(orderItem.getQuantity())
-                        .unitPrice(orderItem.getProduct().getPrice())
-                        .totalPrice(orderItem.getProduct().getPrice() * orderItem.getQuantity())
-                        .build())
-                .collect(Collectors.toList());
-    }
 
     public void validateIfOrderCanBeBilled(List<Order> orders) {
         // Usamos Set para evitar duplicados si la lista 'orders' viniera sucia
@@ -541,10 +496,5 @@ public class OrderServiceImpl implements IOrderService {
         order.setValueToPay(total);
     }
 
-    private OrderResponseDTO buildOrderResponseDTO(Order order) {
-        List<OrderItemResponseDTO> orderItemDTOs = getOrderItemResponse(order);
-        OrderResponseDTO responseDTO = modelMapper.map(order, OrderResponseDTO.class);
-        responseDTO.setOrderItemList(orderItemDTOs);
-        return responseDTO;
-    }
+
 }

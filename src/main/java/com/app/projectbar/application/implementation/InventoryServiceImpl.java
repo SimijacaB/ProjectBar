@@ -1,6 +1,7 @@
 package com.app.projectbar.application.implementation;
 
 import com.app.projectbar.application.interfaces.IInventoryService;
+import com.app.projectbar.application.mapper.InventoryMapper;
 import com.app.projectbar.domain.Ingredient;
 import com.app.projectbar.domain.Inventory;
 import com.app.projectbar.domain.Product;
@@ -10,7 +11,6 @@ import com.app.projectbar.infra.repositories.IIngredientRepository;
 import com.app.projectbar.infra.repositories.IInventoryRepository;
 import com.app.projectbar.infra.repositories.IProductRepository;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class InventoryServiceImpl implements IInventoryService {
     private final IInventoryRepository inventoryRepository;
     private final IProductRepository productRepository;
     private final IIngredientRepository ingredientRepository;
-    private final ModelMapper modelMapper;
+    private final InventoryMapper inventoryMapper;
 
     @Override
     public InventoryResponseDTO save(InventoryDTO inventoryRequest) {
@@ -36,8 +36,8 @@ public class InventoryServiceImpl implements IInventoryService {
         if (inventoryOptional.isPresent()){
             throw new RuntimeException("Inventory already exist by code: " + inventoryRequest.getCode());
         }
-        Inventory inventory = inventoryRepository.save(modelMapper.map(inventoryRequest, Inventory.class));
-        InventoryResponseDTO response = modelMapper.map(inventory, InventoryResponseDTO.class);
+        Inventory inventory = inventoryRepository.save(inventoryMapper.toEntity(inventoryRequest));
+        InventoryResponseDTO response = inventoryMapper.toResponseDTO(inventory);
 
         product.ifPresent(p -> {
             response.setCode(p.getCode());
@@ -70,7 +70,7 @@ public class InventoryServiceImpl implements IInventoryService {
 
         inventoryRepository.save(inventory);
 
-        InventoryResponseDTO response = modelMapper.map(inventory, InventoryResponseDTO.class);
+        InventoryResponseDTO response = inventoryMapper.toResponseDTO(inventory);
         productOptional.ifPresent(p -> response.setName(p.getName()));
         ingredientOptional.ifPresent(i -> response.setName(i.getName()));
         return response;
@@ -92,7 +92,7 @@ public class InventoryServiceImpl implements IInventoryService {
         Inventory inventory = inventoryOptional.get();
         inventory.setQuantity(inventory.getQuantity() - quantity);
 
-        InventoryResponseDTO response = modelMapper.map(inventory, InventoryResponseDTO.class);
+        InventoryResponseDTO response = inventoryMapper.toResponseDTO(inventory);
         productOptional.ifPresent(p -> response.setName(p.getName()));
         ingredientOptional.ifPresent(i -> response.setName(i.getName()));
         return response;
@@ -101,9 +101,7 @@ public class InventoryServiceImpl implements IInventoryService {
     @Override
     public List<InventoryResponseDTO> findAll() {
 
-        List<InventoryResponseDTO> response = inventoryRepository.findAll()
-                .stream()
-                .map(inventory -> modelMapper.map(inventory, InventoryResponseDTO.class)).toList();
+        List<InventoryResponseDTO> response = inventoryMapper.toResponseDTOList(inventoryRepository.findAll());
 
         for (InventoryResponseDTO inventory : response  ) {
             Optional<Product> product = productRepository.findByCode(inventory.getCode());
@@ -123,7 +121,7 @@ public class InventoryServiceImpl implements IInventoryService {
             throw new RuntimeException("Inventory not found by code " + code);
         }
 
-        InventoryResponseDTO response = modelMapper.map(inventory.get(), InventoryResponseDTO.class);
+        InventoryResponseDTO response = inventoryMapper.toResponseDTO(inventory.get());
         product.ifPresent(p -> response.setName(p.getName()));
         ingredient.ifPresent(i -> response.setName(i.getName()));
         return response;

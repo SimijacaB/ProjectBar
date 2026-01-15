@@ -1,5 +1,6 @@
 package com.app.projectbar.application.implementation;
 
+import com.app.projectbar.application.mapper.OrderItemMapper;
 import com.app.projectbar.domain.OrderItem;
 import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
 import com.app.projectbar.domain.dto.orderItem.OrderItemResponseDTO;
@@ -9,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.modelmapper.ModelMapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -19,7 +19,7 @@ class OrderItemServiceImplTest {
     @Mock
     private IOrderItemRepository orderItemRepository;
     @Mock
-    private ModelMapper modelMapper;
+    private OrderItemMapper orderItemMapper;
     @InjectMocks
     private OrderItemServiceImpl orderItemService;
 
@@ -51,9 +51,9 @@ class OrderItemServiceImplTest {
     @Test
     void save_ShouldReturnSavedOrderItem() {
         // Given
-        when(modelMapper.map(itemRequestDTO, OrderItem.class)).thenReturn(orderItem);
+        when(orderItemMapper.toEntity(itemRequestDTO)).thenReturn(orderItem);
         when(orderItemRepository.save(orderItem)).thenReturn(orderItem);
-        when(modelMapper.map(orderItem, OrderItemResponseDTO.class)).thenReturn(itemResponseDTO);
+        when(orderItemMapper.toResponseDTO(orderItem)).thenReturn(itemResponseDTO);
 
         // When
         OrderItemResponseDTO result = orderItemService.save(itemRequestDTO);
@@ -64,8 +64,8 @@ class OrderItemServiceImplTest {
         assertEquals(8, result.getQuantity());
 
         // Verify interactions with mocks or dependencies
-        verify(modelMapper).map(itemRequestDTO, OrderItem.class);
+        verify(orderItemMapper).toEntity(itemRequestDTO);
         verify(orderItemRepository).save(orderItem);
-        verify(modelMapper).map(orderItem, OrderItemResponseDTO.class);
+        verify(orderItemMapper).toResponseDTO(orderItem);
     }
 }

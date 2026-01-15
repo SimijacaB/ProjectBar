@@ -1,5 +1,6 @@
 package com.app.projectbar.application.implementation;
 
+import com.app.projectbar.application.mapper.OrderMapper;
 import com.app.projectbar.domain.Order;
 import com.app.projectbar.domain.OrderTable;
 import com.app.projectbar.domain.Product;
@@ -21,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.modelmapper.ModelMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +45,7 @@ class OrderServiceImplTest {
     @Mock
     private  IOrderTableRepository orderTableRepository;
     @Mock
-    private  ModelMapper modelMapper;
+    private  OrderMapper orderMapper;
     @Mock
     private  IProductRepository productRepository;
     @Mock
@@ -125,15 +125,14 @@ class OrderServiceImplTest {
         when(orderRepository.findByClientName("Santiago")).thenReturn(orders);
 
         //Mapea cada order a OrderForListResponseDTO
-        when(modelMapper.map(order, OrderForListResponseDTO.class)).thenReturn(OrderListResponse);
-        when(modelMapper.map(order2, OrderForListResponseDTO.class)).thenReturn(OrderListResponse2);
-
-        when(modelMapper.map(orderRequest, Order.class)).thenReturn(order);
+        when(orderMapper.toListDTO(order)).thenReturn(OrderListResponse);
+        when(orderMapper.toListDTO(order2)).thenReturn(OrderListResponse2);
+        when(orderMapper.toListDTOList(orders)).thenReturn(orderResponses);
 
         //NOTA: CREO QUE DEBEMOS HACER OTRO RESPONSE, EL CUAL VA A GENERAR DESPUÉS DE REALIZAR LA ACTUALIZACIÓN DE LA ORDEN, YA QUE ESTA DEVOLVIENDO EL RESPONSE DEL SAVE O EL GENERAL
         //VOLVER A PROBAR EL MÉTODO UPDATEORDER
         when(orderRepository.save(any(Order.class))).thenReturn(order);
-        when(modelMapper.map(order, OrderResponseDTO.class)).thenReturn(orderResponse);
+        when(orderMapper.toResponseDTO(order)).thenReturn(orderResponse);
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
     }
 
@@ -184,7 +183,6 @@ class OrderServiceImplTest {
         when(orderTableRepository.findByNumber(3)).thenReturn(Optional.of(orderTable));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
-        when(modelMapper.map(any(Order.class), eq(OrderResponseDTO.class))).thenReturn(expectedResponse);
 
         // ------- WHEN --------
         OrderResponseDTO result = orderService.save(orderRequest);

@@ -1,6 +1,7 @@
 package com.app.projectbar.application.implementation;
 
 import com.app.projectbar.application.interfaces.IProductService;
+import com.app.projectbar.application.mapper.ProductMapper;
 import com.app.projectbar.domain.Ingredient;
 import com.app.projectbar.domain.ProductIngredient;
 import com.app.projectbar.domain.dto.product.ProductForListResponseDTO;
@@ -12,7 +13,6 @@ import com.app.projectbar.domain.Product;
 import com.app.projectbar.infra.repositories.IProductRepository;
 import com.app.projectbar.infra.repositories.IIngredientRepository;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -22,33 +22,32 @@ public class ProductServiceImpl implements IProductService {
 
     private final IProductRepository productRepository;
     private final IIngredientRepository ingredientRepository;
-    private final ModelMapper modelMapper;
+    private final ProductMapper productMapper;
 
     @Override
     public List<ProductForListResponseDTO> findAll() {
         List<Product> productList = productRepository.findAll();
-        return productList.stream()
-                .map(product -> modelMapper.map(product, ProductForListResponseDTO.class)).toList();
+        return productMapper.toListDTOList(productList);
     }
 
 
     @Override
     public ProductResponseDTO findById(Long id) {
-        return modelMapper.map(productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product with id " + id + " not found")), ProductResponseDTO.class);
+        return productMapper.toResponseDTO(productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product with id " + id + " not found")));
     }
 
     @Override
     public ProductResponseDTO findByCode(String code) {
         var product = productRepository.findByCode(code)
                 .orElseThrow(() -> new RuntimeException("Product with code " + code + " not found"));
-        return modelMapper.map(product, ProductResponseDTO.class);
+        return productMapper.toResponseDTO(product);
     }
 
     @Override
     public ProductResponseDTO findByNameExact(String name) {
         var product = productRepository.findOneByName(name)
                 .orElseThrow(() -> new RuntimeException("Product with name " + name + " not found"));
-        return modelMapper.map(product, ProductResponseDTO.class);
+        return productMapper.toResponseDTO(product);
     }
 
     @Override
@@ -83,7 +82,7 @@ public class ProductServiceImpl implements IProductService {
             throw new RuntimeException("Product with code '" + productRequestDTO.getCode() + "' already exists");
         }
 
-        ProductRequestDTO mapped = modelMapper.map(productRequestDTO, ProductRequestDTO.class);
+        ProductRequestDTO mapped = productMapper.updateToRequest(productRequestDTO);
 
         return saveOrUpdate(product, mapped);
     }
@@ -100,14 +99,12 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public List<ProductForListResponseDTO> findByCategory(Category category) {
 
-        return productRepository.findByCategory(category).stream()
-                .map(product -> modelMapper.map(product, ProductForListResponseDTO.class)).toList();
+        return productMapper.toListDTOList(productRepository.findByCategory(category));
     }
 
     @Override
     public List<ProductForListResponseDTO> findByNameContaining(String name) {
-        return productRepository.findByNameContaining(name).stream()
-                .map(product -> modelMapper.map(product, ProductForListResponseDTO.class)).toList();
+        return productMapper.toListDTOList(productRepository.findByNameContaining(name));
     }
 
 
@@ -157,7 +154,7 @@ public class ProductServiceImpl implements IProductService {
        product.setProductIngredients(existingIngredients);
        Product savedProduct = productRepository.save(product);
 
-       ProductResponseDTO productResponseDTO = modelMapper.map(savedProduct, ProductResponseDTO.class);
+       ProductResponseDTO productResponseDTO = productMapper.toResponseDTO(savedProduct);
        for (int i = 0; i < productResponseDTO.getIngredients().size(); i++) {
            productResponseDTO.getIngredients().get(i).setIngredient_id(savedProduct.getProductIngredients().get(i).getIngredient().getId());
            productResponseDTO.getIngredients().get(i).setIngredientExtend(savedProduct.getProductIngredients().get(i).getIngredient().getUnitOfMeasure().toString());

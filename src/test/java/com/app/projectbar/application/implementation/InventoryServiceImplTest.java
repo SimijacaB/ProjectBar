@@ -1,5 +1,6 @@
 package com.app.projectbar.application.implementation;
 
+import com.app.projectbar.application.mapper.InventoryMapper;
 import com.app.projectbar.domain.Ingredient;
 import com.app.projectbar.domain.Inventory;
 import com.app.projectbar.domain.Product;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.modelmapper.ModelMapper;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,7 +32,7 @@ class InventoryServiceImplTest {
     @Mock
     private IProductRepository productRepository;
     @Mock
-    private ModelMapper modelMapper;
+    private InventoryMapper inventoryMapper;
     @InjectMocks
     private InventoryServiceImpl inventoryService;
 
@@ -68,7 +68,7 @@ class InventoryServiceImplTest {
         when(ingredientRepository.findByCode(inventoryRequest.getCode())).thenReturn(Optional.of(ingredient));
 
         // Simulamos el mapeo de InventoryDTO a Inventory
-        when(modelMapper.map(inventoryRequest, Inventory.class)).thenReturn(inventory);
+        when(inventoryMapper.toEntity(inventoryRequest)).thenReturn(inventory);
 
         // Simulamos el guardado de Inventory y el mapeo de InventoryResponseDTO
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(inventory);
@@ -76,7 +76,7 @@ class InventoryServiceImplTest {
          inventoryResponse = new InventoryResponseDTO();
         inventoryResponse.setCode(CODE_GINEBRA);
         inventoryResponse.setName("Ginebra");
-        when(modelMapper.map(inventory, InventoryResponseDTO.class)).thenReturn(inventoryResponse);
+        when(inventoryMapper.toResponseDTO(inventory)).thenReturn(inventoryResponse);
 
         //When
         InventoryResponseDTO result = inventoryService.save(inventoryRequest);
@@ -105,9 +105,9 @@ class InventoryServiceImplTest {
 
         when(productRepository.findByCode(CODE_GINEBRA)).thenReturn(Optional.of(product));
         when(ingredientRepository.findByCode(CODE_GINEBRA)).thenReturn(Optional.of(ingredient));
-        when(modelMapper.map(inventoryRequest, Inventory.class)).thenReturn(inventory);
+        when(inventoryMapper.toEntity(inventoryRequest)).thenReturn(inventory);
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(inventory);
-        when(modelMapper.map(inventory, InventoryResponseDTO.class)).thenReturn(new InventoryResponseDTO());
+        when(inventoryMapper.toResponseDTO(inventory)).thenReturn(new InventoryResponseDTO());
 
         // When
         InventoryResponseDTO result = inventoryService.save(inventoryRequest);
@@ -158,7 +158,7 @@ class InventoryServiceImplTest {
         //Configurar los mocks
         when(inventoryRepository.findByCode(CODE_PILSEN)).thenReturn(Optional.of(existingInventory));
         when(productRepository.findByCode(CODE_PILSEN)).thenReturn(Optional.of(product));
-        when(modelMapper.map(existingInventory, InventoryResponseDTO.class)).thenReturn(inventoryResponse);
+        when(inventoryMapper.toResponseDTO(existingInventory)).thenReturn(inventoryResponse);
 
         //  WHEN
         InventoryResponseDTO result = inventoryService.addStock(quantityToAdd, CODE_PILSEN);
@@ -206,7 +206,7 @@ class InventoryServiceImplTest {
         //Configurar los mocks
         when(inventoryRepository.findByCode(CODE_PILSEN)).thenReturn(Optional.of(existingInventory));
         when(productRepository.findByCode(CODE_PILSEN)).thenReturn(Optional.of(product));
-        when(modelMapper.map(existingInventory, InventoryResponseDTO.class)).thenReturn(inventoryResponse);
+        when(inventoryMapper.toResponseDTO(existingInventory)).thenReturn(inventoryResponse);
 
         //   ---- WHEN ------
         InventoryResponseDTO result = inventoryService.deductStock(quantityToDeduct, CODE_PILSEN);
@@ -273,9 +273,8 @@ class InventoryServiceImplTest {
 
         when(inventoryRepository.findAll()).thenReturn(List.of(inventory1, inventory2, inventory3));
 
-        when(modelMapper.map(inventory1, InventoryResponseDTO.class)).thenReturn(inventoryResponse1);
-        when(modelMapper.map(inventory2, InventoryResponseDTO.class)).thenReturn(inventoryResponse2);
-        when(modelMapper.map(inventory3, InventoryResponseDTO.class)).thenReturn(inventoryResponse3);
+        when(inventoryMapper.toResponseDTOList(List.of(inventory1, inventory2, inventory3)))
+                .thenReturn(List.of(inventoryResponse1, inventoryResponse2, inventoryResponse3));
 
         // ----- WHEN ------
         List<InventoryResponseDTO> result = inventoryService.findAll();
@@ -308,7 +307,7 @@ class InventoryServiceImplTest {
 
         inventoryResponse = new InventoryResponseDTO("Ginebra", CODE_GINEBRA, 1970);
 
-        when(modelMapper.map(inventory1, InventoryResponseDTO.class)).thenReturn(inventoryResponse);
+        when(inventoryMapper.toResponseDTO(inventory1)).thenReturn(inventoryResponse);
 
 
         //  ---- WHEN ------
