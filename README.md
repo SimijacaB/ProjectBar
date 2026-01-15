@@ -2,7 +2,7 @@
 
 **ProjectBar** es un sistema de gestión integral para bares también pensado en implementar en restaurantes, diseñado para **optimizar la atención al cliente y agilizar el trabajo de los meseros**.
 
-## 🎯 ¿Por qué ProjectBar?
+##  ¿Por qué ProjectBar?
 
 En la industria de la hospitalidad, el tiempo es clave. ProjectBar nace con el objetivo de:
 
@@ -11,7 +11,7 @@ En la industria de la hospitalidad, el tiempo es clave. ProjectBar nace con el o
 - **Minimizar errores**: Sistema digital que elimina confusiones en pedidos escritos a mano.
 - **Mejorar la experiencia del cliente**: Atención más ágil y personalizada.
 
-## ✨ Características
+##  Características
 
 - Gestión de productos, ingredientes e inventario
 - Creación y gestión de órdenes y facturas
@@ -19,7 +19,7 @@ En la industria de la hospitalidad, el tiempo es clave. ProjectBar nace con el o
 - Seguridad y gestión de usuarios/roles
 - API REST documentada con Swagger/OpenAPI
 
-## 🛠️ Tecnologías
+##  Tecnologías
 
 - Java 17+
 - Spring Boot
@@ -28,7 +28,7 @@ En la industria de la hospitalidad, el tiempo es clave. ProjectBar nace con el o
 - JasperReports
 - ModelMapper
 
-## 📚 Documentación de la API
+##  Documentación de la API
 
 La documentación interactiva está disponible en **Swagger UI**:
 
