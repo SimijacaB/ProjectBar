@@ -131,6 +131,9 @@ public class OrderServiceImpl implements IOrderService {
                     throw new RuntimeException("Product ID or name is required");
                 }
 
+                // Descontar ingredientes del inventario si el producto requiere preparación
+                deductIngredientsFromInventory(product, itemRequest.getQuantity());
+
                 // Crear el OrderItem
                 OrderItem orderItem = OrderItem.builder()
                         .product(product)
@@ -148,6 +151,38 @@ public class OrderServiceImpl implements IOrderService {
         }
 
         return orderMapper.toResponseDTO(orderRepository.save(newOrder));
+    }
+
+    /**
+     * Descuenta los ingredientes del inventario para un producto.
+     * Solo aplica para productos que requieren preparación (isPrepared = true).
+     * La cantidad de cada ingrediente se multiplica por la cantidad de productos pedidos.
+     * 
+     * @param product El producto a descontar
+     * @param quantity La cantidad de productos pedidos
+     */
+    private void deductIngredientsFromInventory(Product product, Integer quantity) {
+        // Solo descontar si el producto requiere preparación y tiene ingredientes
+        if (product.getIsPrepared() != null && product.getIsPrepared() 
+                && product.getProductIngredients() != null && !product.getProductIngredients().isEmpty()) {
+            
+            for (var productIngredient : product.getProductIngredients()) {
+                String ingredientCode = productIngredient.getIngredient().getCode();
+                // La cantidad a descontar es: amount del ingrediente * cantidad de productos
+                int amountToDeduct = (int) Math.ceil(productIngredient.getAmount() * quantity);
+                
+                try {
+                    inventoryService.deductStock(amountToDeduct, ingredientCode);
+                } catch (RuntimeException e) {
+                    // Si no hay suficiente inventario, lanzar excepción con mensaje descriptivo
+                    throw new RuntimeException(
+                        "No hay suficiente inventario del ingrediente '" + 
+                        productIngredient.getIngredient().getName() + 
+                        "' para el producto '" + product.getName() + "'. " + e.getMessage()
+                    );
+                }
+            }
+        }
     }
 
     @Override
