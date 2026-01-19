@@ -32,3 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 logs/
+
+### Environment Variables ###
+.env
+.env.local
+.env.*.local

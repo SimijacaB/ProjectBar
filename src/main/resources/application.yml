@@ -5,24 +5,24 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/bar_db
-    username: root
-    password: root
+    url: ${DB_URL:jdbc:mysql://localhost:3306/bar_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
 
   jpa:
     hibernate:
       ddl-auto: update
     database: mysql
     database-platform: org.hibernate.dialect.MySQL8Dialect
-    show-sql: true
+    show-sql: ${SHOW_SQL:true}
     properties:
       hibernate:
         format_sql: true
 
 security:
   jwt:
-    secret-key: 3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
-    expiration-time: 3600000
+    secret-key: ${JWT_SECRET_KEY:3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b}
+    expiration-time: ${JWT_EXPIRATION_TIME:3600000}
 
 logging:
   level:
