@@ -1,5 +1,6 @@
 package com.app.projectbar.application.implementation;
 
+import com.app.projectbar.application.interfaces.IInventoryService;
 import com.app.projectbar.application.mapper.OrderMapper;
 import com.app.projectbar.domain.Order;
 import com.app.projectbar.domain.OrderTable;
@@ -12,8 +13,6 @@ import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
 import com.app.projectbar.domain.dto.orderItem.OrderItemResponseDTO;
 import com.app.projectbar.domain.enums.OrderStatus;
 import com.app.projectbar.domain.enums.OrderTableStatus;
-import com.app.projectbar.infra.repositories.IInventoryRepository;
-import com.app.projectbar.infra.repositories.IOrderItemRepository;
 import com.app.projectbar.infra.repositories.IOrderRepository;
 import com.app.projectbar.infra.repositories.IOrderTableRepository;
 import com.app.projectbar.infra.repositories.IProductRepository;
@@ -32,7 +31,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,15 +39,13 @@ class OrderServiceImplTest {
     @Mock
     private  IOrderRepository orderRepository;
     @Mock
-    private  IOrderItemRepository orderItemRepository;
-    @Mock
     private  IOrderTableRepository orderTableRepository;
     @Mock
     private  OrderMapper orderMapper;
     @Mock
     private  IProductRepository productRepository;
     @Mock
-    private  IInventoryRepository inventoryRepository;
+    private  IInventoryService inventoryService;
 
     @InjectMocks
     private OrderServiceImpl orderService;
@@ -165,6 +161,7 @@ class OrderServiceImplTest {
                 .id(1L)
                 .name("Margarita")
                 .price(15.0)
+                .code("MARG-001")
                 .build();
 
         // 5. Configurar el OrderResponseDTO esperado
@@ -183,6 +180,9 @@ class OrderServiceImplTest {
         when(orderTableRepository.findByNumber(3)).thenReturn(Optional.of(orderTable));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
+        when(orderMapper.toResponseDTO(any(Order.class))).thenReturn(expectedResponse);
+        // Mock para descontar inventario del producto sin ingredientes
+        when(inventoryService.deductStock(any(Integer.class), any(String.class))).thenReturn(null);
 
         // ------- WHEN --------
         OrderResponseDTO result = orderService.save(orderRequest);

@@ -92,6 +92,8 @@ public class InventoryServiceImpl implements IInventoryService {
         Inventory inventory = inventoryOptional.get();
         inventory.setQuantity(inventory.getQuantity() - quantity);
 
+        inventoryRepository.save(inventory);
+
         InventoryResponseDTO response = inventoryMapper.toResponseDTO(inventory);
         productOptional.ifPresent(p -> response.setName(p.getName()));
         ingredientOptional.ifPresent(i -> response.setName(i.getName()));

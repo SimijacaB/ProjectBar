@@ -140,17 +140,18 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         // Aquí válido que las órdenes existan
         List<Order> selectedOrders = orderService.getExistingOrdersOrThrow(orderIds);
 
-        // Aquí válido si las órdenes ya están facturadas
+        // Aquí válido si las órdenes pueden facturarse (DELIVERED y no facturadas)
         orderService.validateIfOrderCanBeBilled(selectedOrders);
 
-        // Aquí las setteo todas a READY
-        orderService.setOrdersAsReady(selectedOrders);
-
-        BillDTO billResponse = generateItemForBill(ordersByTable);
-
+        // Generar los items de la factura ANTES de marcar como BILLED
+        BillDTO billResponse = generateItemForBill(selectedOrders);
         billResponse.setClientName(clientName);
 
-        BillDTO savedBill = this.save(billMapper.toEntity(billResponse), ordersByTable);
+        // Guardar la factura en BD
+        BillDTO savedBill = this.save(billMapper.toEntity(billResponse), selectedOrders);
+
+        // Solo después de guardar exitosamente, marcar las órdenes como BILLED
+        orderService.setOrdersAsBilled(selectedOrders);
 
         // Verificar si todas las órdenes de la mesa están facturadas y liberar la mesa
         freeOrderTableIfAllOrdersBilled(tableNumber);
@@ -168,20 +169,21 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         // Aquí válido que las órdenes existan
         List<Order> selectedOrders = orderService.getExistingOrdersOrThrow(orderIds);
 
-        // Aquí válido si las órdenes ya están facturadas
+        // Aquí válido si las órdenes pueden facturarse (DELIVERED y no facturadas)
         orderService.validateIfOrderCanBeBilled(selectedOrders);
 
-        // Aquí las setteo todas a READY
-        orderService.setOrdersAsReady(selectedOrders);
-
-        BillDTO billResponse = generateItemForBill(ordersByClientName);
-
+        // Generar los items de la factura ANTES de marcar como BILLED
+        BillDTO billResponse = generateItemForBill(selectedOrders);
         billResponse.setClientName(clientName);
 
-        BillDTO savedBill = this.save(billMapper.toEntity(billResponse), ordersByClientName);
+        // Guardar la factura en BD
+        BillDTO savedBill = this.save(billMapper.toEntity(billResponse), selectedOrders);
+
+        // Solo después de guardar exitosamente, marcar las órdenes como BILLED
+        orderService.setOrdersAsBilled(selectedOrders);
 
         // Verificar y liberar las mesas de las órdenes facturadas
-        freeTablesIfAllOrdersBilled(ordersByClientName);
+        freeTablesIfAllOrdersBilled(selectedOrders);
 
         return savedBill;
 
@@ -192,16 +194,18 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         // Aquí válido que las órdenes existan
         List<Order> selectedOrders = orderService.getExistingOrdersOrThrow(orderIds);
 
-        // Aquí válido si las órdenes ya están facturadas
+        // Aquí válido si las órdenes pueden facturarse (DELIVERED y no facturadas)
         orderService.validateIfOrderCanBeBilled(selectedOrders);
 
-        // Aquí las setteo todas a READY
-        orderService.setOrdersAsReady(selectedOrders);
-
+        // Generar los items de la factura ANTES de marcar como BILLED
         BillDTO billResponse = generateItemForBill(selectedOrders);
         billResponse.setClientName(selectedOrders.get(0).getClientName());
 
+        // Guardar la factura en BD
         BillDTO savedBill = this.save(billMapper.toEntity(billResponse), selectedOrders);
+
+        // Solo después de guardar exitosamente, marcar las órdenes como BILLED
+        orderService.setOrdersAsBilled(selectedOrders);
 
         // Verificar y liberar las mesas de las órdenes facturadas
         freeTablesIfAllOrdersBilled(selectedOrders);

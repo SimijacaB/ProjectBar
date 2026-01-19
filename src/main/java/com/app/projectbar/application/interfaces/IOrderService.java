@@ -95,10 +95,31 @@ public interface IOrderService {
      */
     List<OrderForListResponseDTO> findMyAssignedOrders();
 
-    void setOrdersAsReady(List<Order> orders);
-
+    /**
+     * Valida que las órdenes puedan ser facturadas.
+     * Una orden puede facturarse SOLO si está en estado DELIVERED y no ha sido facturada.
+     *
+     * @param orders Lista de órdenes a validar
+     * @throws RuntimeException si alguna orden no está DELIVERED
+     * @throws OrdersAlreadyBilledException si alguna orden ya fue facturada
+     */
     void validateIfOrderCanBeBilled(List<Order> orders);
 
+    /**
+     * Marca las órdenes como facturadas (BILLED).
+     * IMPORTANTE: Este método solo debe llamarse después de guardar la factura exitosamente.
+     *
+     * @param orders Lista de órdenes a marcar como BILLED
+     */
+    void setOrdersAsBilled(List<Order> orders);
+
+    /**
+     * Obtiene las órdenes por IDs y valida que todas existan.
+     *
+     * @param orderIds Lista de IDs de órdenes
+     * @return Lista de órdenes encontradas
+     * @throws RuntimeException si alguna orden no existe
+     */
     List<Order> getExistingOrdersOrThrow(List<Long> orderIds);
 
 

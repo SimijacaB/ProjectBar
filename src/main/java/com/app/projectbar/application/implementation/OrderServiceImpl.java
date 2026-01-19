@@ -21,6 +21,7 @@ import com.app.projectbar.infra.repositories.IProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -43,6 +44,7 @@ public class OrderServiceImpl implements IOrderService {
 
 
     @Override
+    @Transactional
     public OrderResponseDTO save(OrderRequestDTO orderRequest) {
         // Validar que la orden tenga al menos un producto
         if (orderRequest.getOrderProducts() == null || orderRequest.getOrderProducts().isEmpty()) {
@@ -154,16 +156,16 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     /**
-     * Descuenta los ingredientes del inventario para un producto.
-     * Solo aplica para productos que requieren preparación (isPrepared = true).
-     * La cantidad de cada ingrediente se multiplica por la cantidad de productos pedidos.
-     * 
+     * Descuenta del inventario según el tipo de producto:
+     * - Si el producto tiene ingredientes (isPrepared = true): descuenta los ingredientes
+     * - Si el producto NO tiene ingredientes (isPrepared = false o null): descuenta el producto directamente
+     *
      * @param product El producto a descontar
      * @param quantity La cantidad de productos pedidos
      */
     private void deductIngredientsFromInventory(Product product, Integer quantity) {
-        // Solo descontar si el producto requiere preparación y tiene ingredientes
-        if (product.getIsPrepared() != null && product.getIsPrepared() 
+        // Si el producto requiere preparación y tiene ingredientes, descontar ingredientes
+        if (product.getIsPrepared() != null && product.getIsPrepared()
                 && product.getProductIngredients() != null && !product.getProductIngredients().isEmpty()) {
             
             for (var productIngredient : product.getProductIngredients()) {
@@ -181,6 +183,16 @@ public class OrderServiceImpl implements IOrderService {
                         "' para el producto '" + product.getName() + "'. " + e.getMessage()
                     );
                 }
+            }
+        } else {
+            // Si el producto NO tiene ingredientes, descontar el producto directamente del inventario
+            try {
+                inventoryService.deductStock(quantity, product.getCode());
+            } catch (RuntimeException e) {
+                throw new RuntimeException(
+                    "No hay suficiente inventario del producto '" +
+                    product.getName() + "'. " + e.getMessage()
+                );
             }
         }
     }
@@ -384,16 +396,13 @@ public class OrderServiceImpl implements IOrderService {
                 .orElseThrow(() -> new OrderNotFoundByIdException(ErrorMessagesService.ORDER_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
 
         OrderStatus targetStatus = OrderStatus.valueOf(newStatus);
-        
+
         // Validaciones de transición de estado según reglas de negocio
         validateStatusTransition(order, targetStatus);
 
-        // Solo entra aquí si el estado a cambiar es "DELIVERED"
-        if (targetStatus == OrderStatus.DELIVERED) {
-            for (OrderItem item : order.getOrderItems()) {
-                inventoryService.deductStock(item.getQuantity(), item.getProduct().getCode());
-            }
-        }
+        // CORRECCIÓN: Se eliminó el descuento duplicado de inventario
+        // El inventario ya se descuenta al crear la orden (línea 135)
+        // No se debe descontar nuevamente al cambiar a DELIVERED
 
         order.setStatus(targetStatus);
 
@@ -464,30 +473,53 @@ public class OrderServiceImpl implements IOrderService {
     }
 
 
+    /**
+     * Valida que las órdenes puedan ser facturadas.
+     * Una orden puede facturarse SOLO si está en estado DELIVERED.
+     * Una orden NO puede facturarse si ya fue facturada (tiene bill_id).
+     */
     public void validateIfOrderCanBeBilled(List<Order> orders) {
-        // Usamos Set para evitar duplicados si la lista 'orders' viniera sucia
-        // y para optimizar la recolección de IDs.
-        Set<Long> invalidOrderIds = orders.stream()
-                // Filtro: Nos interesan las que NO son DELIVERED (Lógica inversa para detectar error rápido)
-                .filter(order -> !OrderStatus.DELIVERED.equals(order.getStatus()))
-                .map(Order::getId)
-                .collect(Collectors.toSet());
+        Set<Long> notDeliveredOrderIds = new HashSet<>();
+        Set<Long> alreadyBilledOrderIds = new HashSet<>();
 
-        if (!invalidOrderIds.isEmpty()) {
-            // String.join es más eficiente que Collectors.joining para colecciones simples
+        for (Order order : orders) {
+            // Validar que la orden esté entregada
+            if (!OrderStatus.DELIVERED.equals(order.getStatus())) {
+                notDeliveredOrderIds.add(order.getId());
+            }
+
+            // Validar que la orden no haya sido facturada previamente
+            if (order.getBill() != null) {
+                alreadyBilledOrderIds.add(order.getId());
+            }
+        }
+
+        if (!notDeliveredOrderIds.isEmpty()) {
             String ids = String.join(", ",
-                    invalidOrderIds.stream().map(String::valueOf).collect(Collectors.toList()));
+                    notDeliveredOrderIds.stream().map(String::valueOf).collect(Collectors.toList()));
+            throw new RuntimeException("Cannot bill orders that are not DELIVERED. Order IDs: " + ids);
+        }
 
-            throw new OrdersAlreadyBilledException(ErrorMessagesService.ORDER_ALREADY_BILLED_EXCEPTION + ids);
+        if (!alreadyBilledOrderIds.isEmpty()) {
+            String ids = String.join(", ",
+                    alreadyBilledOrderIds.stream().map(String::valueOf).collect(Collectors.toList()));
+            throw new OrdersAlreadyBilledException(
+                    ErrorMessagesService.ORDER_ALREADY_BILLED_EXCEPTION + ids);
         }
     }
 
 
-    // método que se encargará de settear el OrderStatus de la Orders que se vayan a facturar a READY
-    public void setOrdersAsReady(List<Order> orders){
+    /**
+     * Marca las órdenes como facturadas (BILLED).
+     * IMPORTANTE: Este método solo debe llamarse después de validar que las órdenes
+     * estén en estado DELIVERED.
+     */
+    public void setOrdersAsBilled(List<Order> orders){
         for (Order order : orders){
-            //order.setStatus(OrderStatus.READY); Se cambia el estado de las ordenes, ya que para facturar una orden, esta debe estar entregada
-            order.setStatus(OrderStatus.DELIVERED);
+            // Cambiar a BILLED solo si está DELIVERED
+            if (OrderStatus.DELIVERED.equals(order.getStatus())) {
+                order.setStatus(OrderStatus.BILLED);
+            }
         }
         orderRepository.saveAll(orders);
     }
