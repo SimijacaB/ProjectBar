@@ -83,6 +83,7 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDTO updateOrder(UpdateOrderDTO updateOrderDTO) {
         Order order = findOrderByIdOrThrow(updateOrderDTO.getId());
 
@@ -95,6 +96,7 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
+    @Transactional
     public void deleteOrder(Long id) {
         log.info("Deleting order {}", id);
         orderRepository.deleteById(id);

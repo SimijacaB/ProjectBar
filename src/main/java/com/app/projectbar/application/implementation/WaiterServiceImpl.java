@@ -29,20 +29,27 @@ public class WaiterServiceImpl implements IWaiterService {
 
     @Override
     public List<WaiterWithOrdersDTO> findAllWaitersWithActiveOrders() {
-        // Obtener todos los meseros activos
-        List<UserEntity> waiters = userRepository.findByRoleAndActive(Role.WAITER);
+        // Obtener TODOS los meseros (activos e inactivos) para que el admin pueda elegir
+        List<UserEntity> waiters = userRepository.findAllByRole(Role.WAITER);
         
         // Mapear a DTO con conteo de órdenes activas
+        // Ordenar: primero los activos con menos órdenes, luego los inactivos
         return waiters.stream()
-                .map(waiter -> WaiterWithOrdersDTO.builder()
-                        .username(waiter.getUsername())
-                        .email(waiter.getEmail())
-                        .activeOrdersCount(orderRepository.countByWaiterUserNameAndStatusIn(
-                                waiter.getUsername(), 
-                                ACTIVE_STATUSES
-                        ))
-                        .build())
-                .sorted(Comparator.comparingInt(WaiterWithOrdersDTO::getActiveOrdersCount))
+                .map(waiter -> {
+                    boolean isActive = !waiter.getDisabled() && !waiter.getLocked();
+                    return WaiterWithOrdersDTO.builder()
+                            .username(waiter.getUsername())
+                            .email(waiter.getEmail())
+                            .activeOrdersCount(orderRepository.countByWaiterUserNameAndStatusIn(
+                                    waiter.getUsername(), 
+                                    ACTIVE_STATUSES
+                            ))
+                            .isActive(isActive)
+                            .build();
+                })
+                .sorted(Comparator
+                        .comparing(WaiterWithOrdersDTO::isActive).reversed() // Activos primero
+                        .thenComparingInt(WaiterWithOrdersDTO::getActiveOrdersCount)) // Luego por menos órdenes
                 .toList();
     }
 }

@@ -14,5 +14,6 @@ public class WaiterWithOrdersDTO {
     private String username;
     private String email;
     private int activeOrdersCount;
+    private boolean isActive; // Indica si el mesero está habilitado
     
 }
