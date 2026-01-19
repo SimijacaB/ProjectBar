@@ -6,6 +6,31 @@ public enum ErrorMessagesService {
     ORDER_ALREADY_BILLED_EXCEPTION("Orders with the following IDs have already been billed "),
     ORDER_NOT_FOUND_BY_ID_EXCEPTION("We haven't found an order with this id."),
     ORDERS_NOT_FOUND_BY_STATUS_EXCEPTION("We haven't found orders with the indicated status."),
+    ORDER_MUST_HAVE_PRODUCTS("Order must have at least one product."),
+    ORDER_ITEM_NOT_FOUND("Order item not found with id: %s"),
+    CANNOT_ADD_ITEMS_TO_DELIVERED_ORDER("Cannot add items to a delivered order. Please create a new order."),
+    CANNOT_BILL_NOT_DELIVERED_ORDERS("Cannot bill orders that are not DELIVERED. Order IDs: %s"),
+    ORDER_IDS_NOT_EXIST("The following Order IDs do not exist: %s"),
+    INVALID_STATUS_TRANSITION("Invalid status transition from %s to %s"),
+    WAITER_REQUIRED_FOR_IN_PROGRESS("Cannot change to IN_PROGRESS without an assigned waiter."),
+    CREATED_ORDER_CAN_ONLY_BE_ASSIGNED_OR_CANCELLED("Order in CREATED status can only be ASSIGNED or CANCELLED."),
+    ASSIGNED_ORDER_CAN_ONLY_MOVE_TO_IN_PROGRESS_OR_CANCELLED("Order in ASSIGNED status can only move to IN_PROGRESS or CANCELLED."),
+    ONLY_CREATED_ORDERS_CAN_BE_ASSIGNED("Only orders in CREATED status can be assigned. Current status: %s"),
+
+    // PRODUCTS
+    PRODUCT_NOT_FOUND_BY_ID("Product not found with id: %s"),
+    PRODUCT_NOT_FOUND_BY_NAME("Product not found with name: %s"),
+    PRODUCT_ID_OR_NAME_REQUIRED("Product ID or name is required."),
+
+    // INVENTORY
+    INSUFFICIENT_INGREDIENT_INVENTORY("Insufficient inventory of ingredient '%s' for product '%s'. %s"),
+    INSUFFICIENT_PRODUCT_INVENTORY("Insufficient inventory of product '%s'. %s"),
+
+    // TABLE
+    TABLE_NOT_FOUND_BY_NUMBER("Table not found with number: %s. Please create the table first."),
+
+    // AUTH
+    USER_NOT_AUTHENTICATED("User must be authenticated to perform this action."),
 
     // BILLS
     BILL_NOT_FOUND_BY_ID_EXCEPTION("We haven't found a bill with this id."),
