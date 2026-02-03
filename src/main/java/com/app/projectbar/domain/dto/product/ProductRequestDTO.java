@@ -2,6 +2,7 @@ package com.app.projectbar.domain.dto.product;
 
 import com.app.projectbar.domain.enums.Category;
 import com.app.projectbar.domain.dto.productIngredient.ProductIngredientRequestDTO;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.*;
@@ -37,6 +38,7 @@ public class ProductRequestDTO {
     private Long photoId;
 
     @NotNull
+    @JsonProperty("isPrepared")
     private Boolean isPrepared;
 
     @NotNull

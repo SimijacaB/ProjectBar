@@ -15,6 +15,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
 
+    @Mapping(target = "isPrepared", source = "isPrepared")
     ProductForListResponseDTO toListDTO(Product product);
 
     List<ProductForListResponseDTO> toListDTOList(List<Product> products);

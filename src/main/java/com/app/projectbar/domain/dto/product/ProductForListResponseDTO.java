@@ -1,6 +1,7 @@
 package com.app.projectbar.domain.dto.product;
 
 import com.app.projectbar.domain.enums.Category;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,6 +19,8 @@ public class ProductForListResponseDTO {
     private String description;
     private Category category;
     private Double price;
-
+    
+    @JsonProperty("isPrepared")
+    private Boolean isPrepared;
 
 }

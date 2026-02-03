@@ -2,6 +2,7 @@ package com.app.projectbar.domain.dto.product;
 
 
 import com.app.projectbar.domain.dto.productIngredient.ProductIngredientRequestDTO;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,6 +40,7 @@ public class UpdateProductRequestDTO {
     private Long photoId;
 
     @NotNull
+    @JsonProperty("isPrepared")
     private Boolean isPrepared;
 
     @NotNull
