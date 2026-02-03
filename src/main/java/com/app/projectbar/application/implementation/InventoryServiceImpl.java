@@ -30,7 +30,11 @@ public class InventoryServiceImpl implements IInventoryService {
         Optional<Product> product = productRepository.findByCode(inventoryRequest.getCode());
         Optional<Ingredient> ingredient = ingredientRepository.findByCode(inventoryRequest.getCode());
         if(product.isEmpty() && ingredient.isEmpty()){
-            throw new RuntimeException("Product not found by code " + inventoryRequest.getCode());
+            throw new RuntimeException("Product or Ingredient not found by code " + inventoryRequest.getCode());
+        }
+        // Prepared products cannot have inventory - their availability depends on ingredient stock
+        if(product.isPresent() && Boolean.TRUE.equals(product.get().getIsPrepared())){
+            throw new RuntimeException("Cannot create inventory for prepared products. Their availability depends on ingredient stock.");
         }
         Optional<Inventory> inventoryOptional = inventoryRepository.findByCode(inventoryRequest.getCode());
         if (inventoryOptional.isPresent()){
