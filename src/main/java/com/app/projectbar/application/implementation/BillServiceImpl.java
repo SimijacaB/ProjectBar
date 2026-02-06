@@ -130,6 +130,9 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         bill.setOrders(orders);
         Bill savedBill = billRepository.save(bill);
 
+        // Guardar las órdenes actualizadas para asegurar que se persistan los cambios
+        orderRepository.saveAll(orders);
+
         String formattedBillNumber = String.format("FE-%06d", savedBill.getId());
         savedBill.setBillNumber(formattedBillNumber);
 
