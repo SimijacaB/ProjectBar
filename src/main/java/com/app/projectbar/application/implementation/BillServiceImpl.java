@@ -23,6 +23,7 @@ import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.InputStream;
@@ -65,25 +66,45 @@ public class BillServiceImpl implements IBillService, IBillReportService {
      * 2. TODAS las órdenes de la mesa tienen estado BILLED
      */
     private void freeOrderTableIfAllOrdersBilled(Integer tableNumber) {
+        if (tableNumber == null) {
+            log.debug("Table number is null, skipping table free operation");
+            return;
+        }
+
         // Buscar la mesa por número
         orderTableRepository.findByNumber(tableNumber).ifPresent(orderTable -> {
+            log.debug("Checking if table {} should be freed", tableNumber);
+
             // Obtener todas las órdenes de esta mesa
             List<Order> allOrdersInTable = orderRepository.findByTableNumber(tableNumber);
             
+            log.debug("Table {} has {} orders", tableNumber, allOrdersInTable.size());
+
             // Si no hay órdenes en la mesa, no hacer nada
             if (allOrdersInTable.isEmpty()) {
+                log.debug("No orders found for table {}", tableNumber);
                 return;
             }
             
             // Verificar que TODAS las órdenes estén en estado BILLED
-            boolean allOrdersBilled = allOrdersInTable.stream()
-                    .allMatch(order -> order.getStatus() == OrderStatus.BILLED);
+            List<Order> notBilledOrders = allOrdersInTable.stream()
+                    .filter(order -> order.getStatus() != OrderStatus.BILLED)
+                    .toList();
+
+            boolean allOrdersBilled = notBilledOrders.isEmpty();
+
+            log.debug("Table {}: All orders billed = {}, Not billed orders = {}",
+                    tableNumber, allOrdersBilled, notBilledOrders.size());
 
             // Solo liberar la mesa si todas las órdenes están facturadas y la mesa está ocupada
             if (allOrdersBilled && orderTable.getStatus() == OrderTableStatus.OCCUPIED) {
                 orderTable.setStatus(OrderTableStatus.FREE);
                 orderTableRepository.save(orderTable);
                 log.info("Mesa {} liberada automáticamente - todas sus órdenes están en estado BILLED", tableNumber);
+            } else if (allOrdersBilled && orderTable.getStatus() != OrderTableStatus.OCCUPIED) {
+                log.debug("Table {} is not in OCCUPIED status, current status: {}", tableNumber, orderTable.getStatus());
+            } else if (!allOrdersBilled) {
+                log.debug("Not all orders in table {} are billed yet", tableNumber);
             }
         });
     }
@@ -131,6 +152,7 @@ public class BillServiceImpl implements IBillService, IBillReportService {
     }
 
     @Override
+    @Transactional
     public BillDTO generateBillByTable(Integer tableNumber, String clientName) {
 
         List<Order> ordersByTable = orderRepository.findByTableNumber(tableNumber);
@@ -153,14 +175,19 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         // Solo después de guardar exitosamente, marcar las órdenes como BILLED
         orderService.setOrdersAsBilled(selectedOrders);
 
-        // Verificar si todas las órdenes de la mesa están facturadas y liberar la mesa
-        freeOrderTableIfAllOrdersBilled(tableNumber);
+        // Refrescar las órdenes desde BD para obtener el estado actualizado
+        List<Long> updatedOrderIds = selectedOrders.stream().map(Order::getId).toList();
+        List<Order> updatedOrders = orderRepository.findAllById(updatedOrderIds);
+
+        // Verificar y liberar las mesas de las órdenes facturadas
+        freeTablesIfAllOrdersBilled(updatedOrders);
 
         return savedBill;
 
     }
 
     @Override
+    @Transactional
     public BillDTO generateBillByClient(String clientName) {
         List<Order> ordersByClientName = orderRepository.findByClientName(clientName);
 
@@ -182,14 +209,19 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         // Solo después de guardar exitosamente, marcar las órdenes como BILLED
         orderService.setOrdersAsBilled(selectedOrders);
 
+        // Refrescar las órdenes desde BD para obtener el estado actualizado
+        List<Long> updatedOrderIds = selectedOrders.stream().map(Order::getId).toList();
+        List<Order> updatedOrders = orderRepository.findAllById(updatedOrderIds);
+
         // Verificar y liberar las mesas de las órdenes facturadas
-        freeTablesIfAllOrdersBilled(selectedOrders);
+        freeTablesIfAllOrdersBilled(updatedOrders);
 
         return savedBill;
 
     }
 
     @Override
+    @Transactional
     public BillDTO generateBillBySelection(List<Long> orderIds) {
         // Aquí válido que las órdenes existan
         List<Order> selectedOrders = orderService.getExistingOrdersOrThrow(orderIds);
@@ -207,8 +239,12 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         // Solo después de guardar exitosamente, marcar las órdenes como BILLED
         orderService.setOrdersAsBilled(selectedOrders);
 
+        // Refrescar las órdenes desde BD para obtener el estado actualizado
+        List<Long> updatedOrderIds = selectedOrders.stream().map(Order::getId).toList();
+        List<Order> updatedOrders = orderRepository.findAllById(updatedOrderIds);
+
         // Verificar y liberar las mesas de las órdenes facturadas
-        freeTablesIfAllOrdersBilled(selectedOrders);
+        freeTablesIfAllOrdersBilled(updatedOrders);
 
         return savedBill;
     }
