@@ -168,15 +168,16 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         // Aquí válido si las órdenes pueden facturarse (DELIVERED y no facturadas)
         orderService.validateIfOrderCanBeBilled(selectedOrders);
 
-        // Generar los items de la factura ANTES de marcar como BILLED
+        // Marcar las órdenes como BILLED ANTES de guardar la factura
+        selectedOrders.forEach(order -> order.setStatus(OrderStatus.BILLED));
+
+        // Generar los items de la factura CON las órdenes ya marcadas como BILLED
         BillDTO billResponse = generateItemForBill(selectedOrders);
         billResponse.setClientName(clientName);
 
-        // Guardar la factura en BD
+        // Guardar la factura en BD con las órdenes BILLED
         BillDTO savedBill = this.save(billMapper.toEntity(billResponse), selectedOrders);
 
-        // Solo después de guardar exitosamente, marcar las órdenes como BILLED
-        orderService.setOrdersAsBilled(selectedOrders);
 
         // Refrescar las órdenes desde BD para obtener el estado actualizado
         List<Long> updatedOrderIds = selectedOrders.stream().map(Order::getId).toList();
@@ -202,15 +203,16 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         // Aquí válido si las órdenes pueden facturarse (DELIVERED y no facturadas)
         orderService.validateIfOrderCanBeBilled(selectedOrders);
 
-        // Generar los items de la factura ANTES de marcar como BILLED
+        // Marcar las órdenes como BILLED ANTES de guardar la factura
+        selectedOrders.forEach(order -> order.setStatus(OrderStatus.BILLED));
+
+        // Generar los items de la factura CON las órdenes ya marcadas como BILLED
         BillDTO billResponse = generateItemForBill(selectedOrders);
         billResponse.setClientName(clientName);
 
-        // Guardar la factura en BD
+        // Guardar la factura en BD con las órdenes BILLED
         BillDTO savedBill = this.save(billMapper.toEntity(billResponse), selectedOrders);
 
-        // Solo después de guardar exitosamente, marcar las órdenes como BILLED
-        orderService.setOrdersAsBilled(selectedOrders);
 
         // Refrescar las órdenes desde BD para obtener el estado actualizado
         List<Long> updatedOrderIds = selectedOrders.stream().map(Order::getId).toList();
@@ -232,15 +234,16 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         // Aquí válido si las órdenes pueden facturarse (DELIVERED y no facturadas)
         orderService.validateIfOrderCanBeBilled(selectedOrders);
 
-        // Generar los items de la factura ANTES de marcar como BILLED
+        // Marcar las órdenes como BILLED ANTES de guardar la factura
+        selectedOrders.forEach(order -> order.setStatus(OrderStatus.BILLED));
+
+        // Generar los items de la factura CON las órdenes ya marcadas como BILLED
         BillDTO billResponse = generateItemForBill(selectedOrders);
         billResponse.setClientName(selectedOrders.get(0).getClientName());
 
-        // Guardar la factura en BD
+        // Guardar la factura en BD con las órdenes BILLED
         BillDTO savedBill = this.save(billMapper.toEntity(billResponse), selectedOrders);
 
-        // Solo después de guardar exitosamente, marcar las órdenes como BILLED
-        orderService.setOrdersAsBilled(selectedOrders);
 
         // Refrescar las órdenes desde BD para obtener el estado actualizado
         List<Long> updatedOrderIds = selectedOrders.stream().map(Order::getId).toList();
