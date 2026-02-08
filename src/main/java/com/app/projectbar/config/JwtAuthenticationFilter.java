@@ -40,6 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         String token = null;
         String username = null;
+        boolean tokenExpired = false;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
@@ -48,6 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 username = jwtUtil.extractUsername(token);
             } catch (ExpiredJwtException e) {
                 log.warn("JWT token expired: {}", e.getMessage());
+                tokenExpired = true;
                 // Continuar sin autenticar - Spring Security manejará el acceso no autorizado
             } catch (MalformedJwtException e) {
                 log.warn("Malformed JWT token: {}", e.getMessage());
@@ -60,6 +62,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
+        // Si el token está expirado, agregar un header para informar al cliente
+        if (tokenExpired) {
+            response.setHeader("X-Token-Expired", "true");
+            log.info("Token expired - client should refresh or re-authenticate");
+        }
+
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 UserDetails userDetails = userServiceSecurity.loadUserByUsername(username);
@@ -68,9 +76,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             userDetails, null, userDetails.getAuthorities());
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    log.debug("User '{}' authenticated successfully", username);
                 }
             } catch (Exception e) {
-                log.error("Error during authentication: {}", e.getMessage());
+                log.error("Error during authentication for user '{}': {}", username, e.getMessage());
             }
         }
 
