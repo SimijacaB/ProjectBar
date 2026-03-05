@@ -16,6 +16,8 @@ import java.util.List;
 @Builder
 public class BillDTO {
 
+    private Long id;
+
     private String clientName;
 
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")

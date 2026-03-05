@@ -49,14 +49,16 @@ public class BillServiceImpl implements IBillService, IBillReportService {
     @Override
     public BillDTO findById(Long id) {
         var bill = billRepository.findById(id)
-                .orElseThrow(() -> new BillNotFoundByIdException(ErrorMessagesService.BILL_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
+                .orElseThrow(() -> new BillNotFoundByIdException(
+                        ErrorMessagesService.BILL_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
         return billMapper.toDTO(bill);
     }
 
     @Override
     public BillDTO findByNumber(String number) {
         var bill = billRepository.findByBillNumber(number)
-                .orElseThrow(() -> new BillNotFoundByNumberException(ErrorMessagesService.BILL_NOT_FOUND_BY_NUMBER_EXCEPTION.getMessage()));
+                .orElseThrow(() -> new BillNotFoundByNumberException(
+                        ErrorMessagesService.BILL_NOT_FOUND_BY_NUMBER_EXCEPTION.getMessage()));
         return billMapper.toDTO(bill);
     }
 
@@ -66,7 +68,7 @@ public class BillServiceImpl implements IBillService, IBillReportService {
      * 1. Existe al menos una orden en la mesa
      * 2. TODAS las órdenes de la mesa tienen estado BILLED
      *
-     * @param tableNumber número de la mesa a verificar
+     * @param tableNumber           número de la mesa a verificar
      * @param billedOrdersFromTable órdenes que acabamos de facturar de esta mesa
      */
     private void freeOrderTableIfAllOrdersBilled(Integer tableNumber, List<Order> billedOrdersFromTable) {
@@ -81,7 +83,7 @@ public class BillServiceImpl implements IBillService, IBillReportService {
 
             // Obtener todas las órdenes de esta mesa desde la BD
             List<Order> allOrdersInTable = orderRepository.findByTableNumber(tableNumber);
-            
+
             log.info("Table {} has {} orders total in database", tableNumber, allOrdersInTable.size());
 
             // Si no hay órdenes en la mesa, no hacer nada
@@ -89,9 +91,10 @@ public class BillServiceImpl implements IBillService, IBillReportService {
                 log.info("No orders found for table {}", tableNumber);
                 return;
             }
-            
+
             // Verificar que TODAS las órdenes estén en estado BILLED
-            // Usamos las órdenes de la BD, pero las que acabamos de facturar ya están en memoria con BILLED
+            // Usamos las órdenes de la BD, pero las que acabamos de facturar ya están en
+            // memoria con BILLED
             List<Order> notBilledOrders = allOrdersInTable.stream()
                     .filter(order -> {
                         // Si la orden está en las que acabamos de facturar, ya está BILLED
@@ -112,7 +115,8 @@ public class BillServiceImpl implements IBillService, IBillReportService {
             log.info("Table {}: All orders billed = {}, Not billed orders count = {}",
                     tableNumber, allOrdersBilled, notBilledOrders.size());
 
-            // Solo liberar la mesa si todas las órdenes están facturadas y la mesa está ocupada
+            // Solo liberar la mesa si todas las órdenes están facturadas y la mesa está
+            // ocupada
             if (allOrdersBilled && orderTable.getStatus() == OrderTableStatus.OCCUPIED) {
                 orderTable.setStatus(OrderTableStatus.FREE);
                 orderTableRepository.save(orderTable);
@@ -170,7 +174,8 @@ public class BillServiceImpl implements IBillService, IBillReportService {
     @Override
     public void delete(Long billNumber) {
         var bill = billRepository.findById(billNumber)
-                .orElseThrow(() -> new BillNotFoundByIdException(ErrorMessagesService.BILL_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
+                .orElseThrow(() -> new BillNotFoundByIdException(
+                        ErrorMessagesService.BILL_NOT_FOUND_BY_ID_EXCEPTION.getMessage()));
 
         billRepository.deleteById(billNumber);
 
@@ -201,7 +206,8 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         BillDTO savedBill = this.save(billMapper.toEntity(billResponse), selectedOrders);
 
         // Verificar y liberar las mesas de las órdenes facturadas
-        // Usamos selectedOrders directamente ya que tienen el estado correcto después del flush
+        // Usamos selectedOrders directamente ya que tienen el estado correcto después
+        // del flush
         freeTablesIfAllOrdersBilled(selectedOrders);
 
         return savedBill;
@@ -232,7 +238,8 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         BillDTO savedBill = this.save(billMapper.toEntity(billResponse), selectedOrders);
 
         // Verificar y liberar las mesas de las órdenes facturadas
-        // Usamos selectedOrders directamente ya que tienen el estado correcto después del flush
+        // Usamos selectedOrders directamente ya que tienen el estado correcto después
+        // del flush
         freeTablesIfAllOrdersBilled(selectedOrders);
 
         return savedBill;
@@ -259,7 +266,8 @@ public class BillServiceImpl implements IBillService, IBillReportService {
         BillDTO savedBill = this.save(billMapper.toEntity(billResponse), selectedOrders);
 
         // Verificar y liberar las mesas de las órdenes facturadas
-        // Usamos selectedOrders directamente ya que tienen el estado correcto después del flush
+        // Usamos selectedOrders directamente ya que tienen el estado correcto después
+        // del flush
         freeTablesIfAllOrdersBilled(selectedOrders);
 
         return savedBill;
@@ -327,7 +335,6 @@ public class BillServiceImpl implements IBillService, IBillReportService {
                 throw new RuntimeException("Report template not found");
             }
 
-
             // Preparar los parámetros
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("billNumber", billDTO.getBillNumber());
@@ -360,8 +367,6 @@ public class BillServiceImpl implements IBillService, IBillReportService {
                 JasperExportManager.exportReportToPdfFile(print, destinationPath);
                 System.out.println("Report Created Successfully");
 
-
-
                 // Retornar el PDF como bytes
                 byte[] pdfBytes = JasperExportManager.exportReportToPdf(print);
                 log.debug("PDF generated successfully with {} bytes", pdfBytes.length);
@@ -377,6 +382,5 @@ public class BillServiceImpl implements IBillService, IBillReportService {
             throw new RuntimeException("Error generating PDF", e);
         }
     }
-
 
 }

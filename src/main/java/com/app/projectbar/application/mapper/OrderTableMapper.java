@@ -15,6 +15,7 @@ public interface OrderTableMapper {
     @Mapping(target = "status", ignore = true)
     OrderTable toEntity(OrderTableRequestDTO dto);
 
+    @Mapping(target = "activeOrdersCount", ignore = true)
     OrderTableResponseDTO toResponseDTO(OrderTable orderTable);
 
     List<OrderTableResponseDTO> toResponseDTOList(List<OrderTable> orderTables);

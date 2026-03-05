@@ -25,6 +25,13 @@ public class OrderTableServiceImpl implements IOrderTableService {
     private final IOrderRepository orderRepository;
     private final OrderTableMapper orderTableMapper;
 
+    // Estados de órdenes que se consideran "activas" para una mesa
+    private static final List<OrderStatus> ACTIVE_STATUSES = List.of(
+            OrderStatus.ASSIGNED,
+            OrderStatus.IN_PROGRESS,
+            OrderStatus.READY
+    );
+
     /**
      * Crea una nueva mesa en el restaurante.
      * Este método es usado por el ADMINISTRADOR para registrar las mesas físicas del restaurante.
@@ -50,27 +57,30 @@ public class OrderTableServiceImpl implements IOrderTableService {
                 .notes(orderTableRequest.getNotes())
                 .build();
 
-        return orderTableMapper.toResponseDTO(orderTableRepository.save(orderTable));
+        OrderTable savedTable = orderTableRepository.save(orderTable);
+        return enrichWithActiveOrdersCount(orderTableMapper.toResponseDTO(savedTable));
     }
 
     @Override
     public List<OrderTableResponseDTO> findAll() {
         List<OrderTable> orderTables = orderTableRepository.findAll();
-        return orderTableMapper.toResponseDTOList(orderTables);
+        return orderTableMapper.toResponseDTOList(orderTables).stream()
+                .map(this::enrichWithActiveOrdersCount)
+                .collect(Collectors.toList());
     }
 
     @Override
     public OrderTableResponseDTO findById(Long id) {
         OrderTable orderTable = orderTableRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Mesa no encontrada con ID: " + id));
-        return orderTableMapper.toResponseDTO(orderTable);
+        return enrichWithActiveOrdersCount(orderTableMapper.toResponseDTO(orderTable));
     }
 
     @Override
     public OrderTableResponseDTO findByNumber(Integer number) {
         OrderTable orderTable = orderTableRepository.findByNumber(number)
                 .orElseThrow(() -> new RuntimeException("Mesa no encontrada con número: " + number));
-        return orderTableMapper.toResponseDTO(orderTable);
+        return enrichWithActiveOrdersCount(orderTableMapper.toResponseDTO(orderTable));
     }
 
     @Override
@@ -89,7 +99,8 @@ public class OrderTableServiceImpl implements IOrderTableService {
         orderTable.setCapacity(orderTableRequest.getCapacity());
         orderTable.setNotes(orderTableRequest.getNotes());
 
-        return orderTableMapper.toResponseDTO(orderTableRepository.save(orderTable));
+        OrderTable savedTable = orderTableRepository.save(orderTable);
+        return enrichWithActiveOrdersCount(orderTableMapper.toResponseDTO(savedTable));
     }
 
     @Override
@@ -106,7 +117,8 @@ public class OrderTableServiceImpl implements IOrderTableService {
 
         orderTable.setStatus(status);
 
-        return orderTableMapper.toResponseDTO(orderTableRepository.save(orderTable));
+        OrderTable savedTable = orderTableRepository.save(orderTable);
+        return enrichWithActiveOrdersCount(orderTableMapper.toResponseDTO(savedTable));
     }
 
     @Override
@@ -131,7 +143,9 @@ public class OrderTableServiceImpl implements IOrderTableService {
     @Override
     public List<OrderTableResponseDTO> findByStatus(OrderTableStatus status) {
         List<OrderTable> orderTables = orderTableRepository.findByStatus(status);
-        return orderTableMapper.toResponseDTOList(orderTables);
+        return orderTableMapper.toResponseDTOList(orderTables).stream()
+                .map(this::enrichWithActiveOrdersCount)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -139,4 +153,14 @@ public class OrderTableServiceImpl implements IOrderTableService {
         return orderTableRepository.existsByNumber(number);
     }
 
+    /**
+     * Enriquece el DTO con el conteo de órdenes activas de la mesa.
+     */
+    private OrderTableResponseDTO enrichWithActiveOrdersCount(OrderTableResponseDTO dto) {
+        int activeCount = (int) orderRepository.findByTableNumber(dto.getNumber()).stream()
+                .filter(order -> ACTIVE_STATUSES.contains(order.getStatus()))
+                .count();
+        dto.setActiveOrdersCount(activeCount);
+        return dto;
+    }
 }

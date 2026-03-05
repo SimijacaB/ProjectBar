@@ -38,7 +38,6 @@ import static com.app.projectbar.domain.enums.OrderTableStatus.*;
 @RequiredArgsConstructor
 public class OrderServiceImpl implements IOrderService {
 
-
     private static final String UNAUTHENTICATED_PRINCIPAL = "anonymousUser";
 
     private final IOrderRepository orderRepository;
@@ -208,7 +207,8 @@ public class OrderServiceImpl implements IOrderService {
 
         if (order.getStatus() != OrderStatus.CREATED) {
             throw new InvalidOrderStatusTransitionException(
-                    String.format(ErrorMessagesService.ONLY_CREATED_ORDERS_CAN_BE_ASSIGNED.getMessage(), order.getStatus()));
+                    String.format(ErrorMessagesService.ONLY_CREATED_ORDERS_CAN_BE_ASSIGNED.getMessage(),
+                            order.getStatus()));
         }
 
         order.setWaiterUserName(waiterUsername);
@@ -232,7 +232,8 @@ public class OrderServiceImpl implements IOrderService {
 
     /**
      * Validates that orders can be billed.
-     * An order can be billed ONLY if it's in DELIVERED status and hasn't been billed before.
+     * An order can be billed ONLY if it's in DELIVERED status and hasn't been
+     * billed before.
      */
     public void validateIfOrderCanBeBilled(List<Order> orders) {
         Set<Long> notDeliveredOrderIds = new HashSet<>();
@@ -266,7 +267,8 @@ public class OrderServiceImpl implements IOrderService {
 
     /**
      * Marks orders as BILLED.
-     * IMPORTANT: This method should only be called after validating that orders are in DELIVERED status.
+     * IMPORTANT: This method should only be called after validating that orders are
+     * in DELIVERED status.
      */
     @Transactional
     public void setOrdersAsBilled(List<Order> orders) {
@@ -326,6 +328,7 @@ public class OrderServiceImpl implements IOrderService {
 
     /**
      * Gets the username of the authenticated waiter.
+     * 
      * @throws UserNotAuthenticatedException if no waiter is authenticated
      */
     private String getAuthenticatedWaiterUsername() {
@@ -390,7 +393,8 @@ public class OrderServiceImpl implements IOrderService {
         if (itemRequest.getIdProduct() != null) {
             return productRepository.findById(itemRequest.getIdProduct())
                     .orElseThrow(() -> new ProductNotFoundException(
-                            String.format(ErrorMessagesService.PRODUCT_NOT_FOUND_BY_ID.getMessage(), itemRequest.getIdProduct())));
+                            String.format(ErrorMessagesService.PRODUCT_NOT_FOUND_BY_ID.getMessage(),
+                                    itemRequest.getIdProduct())));
         }
         if (itemRequest.getProductName() != null) {
             return findProductByNameOrThrow(itemRequest.getProductName());
@@ -457,7 +461,8 @@ public class OrderServiceImpl implements IOrderService {
     /**
      * Deducts from inventory based on product type:
      * - If the product has ingredients (isPrepared = true): deducts ingredients
-     * - If the product has NO ingredients (isPrepared = false or null): deducts the product directly
+     * - If the product has NO ingredients (isPrepared = false or null): deducts the
+     * product directly
      */
     private void deductIngredientsFromInventory(Product product, Integer quantity) {
         if (isProductPrepared(product)) {
