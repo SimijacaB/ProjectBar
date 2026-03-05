@@ -4,7 +4,6 @@ import com.app.projectbar.application.mapper.InventoryMapper;
 import com.app.projectbar.domain.Ingredient;
 import com.app.projectbar.domain.Inventory;
 import com.app.projectbar.domain.Product;
-import com.app.projectbar.domain.dto.ingredient.IngredientResponseDTO;
 import com.app.projectbar.domain.dto.inventory.InventoryDTO;
 import com.app.projectbar.domain.dto.inventory.InventoryResponseDTO;
 import com.app.projectbar.infra.repositories.IIngredientRepository;
