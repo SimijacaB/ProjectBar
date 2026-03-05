@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/order-table")
+@RequestMapping("/api/tables")
 public class OrderTableController {
 
     private final IOrderTableService orderTableService;
@@ -35,7 +35,7 @@ public class OrderTableController {
     /**
      * Obtiene todas las mesas.
      */
-    @GetMapping("/all")
+    @GetMapping
     public ResponseEntity<List<OrderTableResponseDTO>> findAll() {
         return ResponseEntity.ok(orderTableService.findAll());
     }

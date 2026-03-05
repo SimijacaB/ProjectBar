@@ -20,10 +20,11 @@ public class WaiterController {
 
     /**
      * Obtiene todos los meseros activos con el conteo de sus órdenes activas.
-     * Ordenados por cantidad de órdenes (menor primero) para facilitar la asignación.
+     * Ordenados por cantidad de órdenes (menor primero) para facilitar la
+     * asignación.
      * Solo accesible por ADMIN.
      */
-    @GetMapping("/with-orders")
+    @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<WaiterWithOrdersDTO>> getWaitersWithActiveOrders() {
         return ResponseEntity.ok(waiterService.findAllWaitersWithActiveOrders());

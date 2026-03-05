@@ -19,41 +19,43 @@ public class InventoryController {
 
     private final IInventoryService inventoryService;
 
-    @PostMapping("/save")
+    @PostMapping
     @Transactional
-    public ResponseEntity<InventoryResponseDTO> save(@RequestBody @Valid InventoryDTO inventoryDTO){
-        return ResponseEntity.ok(inventoryService.save(inventoryDTO));
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<InventoryResponseDTO> save(@RequestBody @Valid InventoryDTO inventoryDTO) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(inventoryService.save(inventoryDTO));
     }
 
-    @PutMapping("/add-stock/{quantity}/{code}")
+    @PatchMapping("/{code}/add-stock")
     @Transactional
-    public ResponseEntity<InventoryResponseDTO> addStock(@PathVariable @Valid Integer quantity,@PathVariable @Valid String code){
+    public ResponseEntity<InventoryResponseDTO> addStock(@PathVariable String code,
+            @RequestParam @Valid Integer quantity) {
         return ResponseEntity.ok(inventoryService.addStock(quantity, code));
     }
 
-    @PutMapping("/deduct-stock/{quantity}/{code}")
+    @PatchMapping("/{code}/deduct-stock")
     @Transactional
-    public ResponseEntity<InventoryResponseDTO> deductStock(@PathVariable @Valid Integer quantity,@PathVariable @Valid String code){
+    public ResponseEntity<InventoryResponseDTO> deductStock(@PathVariable String code,
+            @RequestParam @Valid Integer quantity) {
         return ResponseEntity.ok(inventoryService.deductStock(quantity, code));
     }
 
-    @GetMapping("/all")
+    @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<InventoryResponseDTO>> findAll(){
+    public ResponseEntity<List<InventoryResponseDTO>> findAll() {
         return ResponseEntity.ok(inventoryService.findAll());
     }
 
-    @GetMapping("/find-by-code/{code}")
+    @GetMapping("/{code}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<InventoryResponseDTO> findByCode(@PathVariable String code){
+    public ResponseEntity<InventoryResponseDTO> findByCode(@PathVariable String code) {
         return ResponseEntity.ok(inventoryService.findByCode(code));
     }
 
-    @DeleteMapping("/delete/{code}")
+    @DeleteMapping("/{code}")
     @Transactional
-    public void delete(@PathVariable String code){
+    public void delete(@PathVariable String code) {
         inventoryService.deleteByCode(code);
     }
-
 
 }

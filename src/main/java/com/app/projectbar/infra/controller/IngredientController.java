@@ -6,27 +6,26 @@ import com.app.projectbar.domain.dto.ingredient.IngredientResponseDTO;
 import com.app.projectbar.domain.dto.ingredient.UpdateIngredientDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/ingredient")
+@RequestMapping("/api/ingredients")
 @RequiredArgsConstructor
 public class IngredientController {
 
     private final IIngredientService ingredientService;
-
 
     @GetMapping("/{id}")
     public ResponseEntity<IngredientResponseDTO> findById(@PathVariable Long id) {
         return ResponseEntity.ok(ingredientService.findById(id));
     }
 
-    @GetMapping("/all")
+    @GetMapping
     public ResponseEntity<List<IngredientResponseDTO>> findAll() {
         return ResponseEntity.ok(ingredientService.findAll());
     }
@@ -36,19 +35,21 @@ public class IngredientController {
         return ResponseEntity.ok(ingredientService.findByCode(code));
     }
 
-    @PostMapping("/save")
+    @PostMapping
     @Transactional
+    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<IngredientResponseDTO> save(@RequestBody @Valid IngredientRequestDTO ingredientRequest) {
-        return ResponseEntity.ok(ingredientService.save(ingredientRequest));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ingredientService.save(ingredientRequest));
     }
 
-    @PutMapping("/update")
+    @PutMapping("/{id}")
     @Transactional
-    public ResponseEntity<IngredientResponseDTO> update(@RequestBody @Valid UpdateIngredientDTO updateIngredient) {
+    public ResponseEntity<IngredientResponseDTO> update(@PathVariable Long id,
+            @RequestBody @Valid UpdateIngredientDTO updateIngredient) {
         return ResponseEntity.ok(ingredientService.update(updateIngredient));
     }
 
-    @DeleteMapping("/delete/{code}")
+    @DeleteMapping("/code/{code}")
     @Transactional
     public void delete(@PathVariable String code) {
         ingredientService.delete(code);

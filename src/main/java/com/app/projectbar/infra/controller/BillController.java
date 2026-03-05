@@ -15,48 +15,45 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/bill")
+@RequestMapping("/api/bills")
 public class BillController {
 
     private final IBillService billService;
     private final IBillReportService billReportService; // Inyectar el servicio de reporte
 
-
-    @PostMapping("/save/by-table/{numberTable}/{clientName}")
+    @PostMapping("/table/{numberTable}/{clientName}")
     @Transactional
-    public ResponseEntity<BillDTO> generateByTable(@PathVariable Integer numberTable, @PathVariable String clientName){
+    public ResponseEntity<BillDTO> generateByTable(@PathVariable Integer numberTable, @PathVariable String clientName) {
         return ResponseEntity.ok(billService.generateBillByTable(numberTable, clientName));
     }
 
-    @PostMapping("/save/by-client/{clientName}")
+    @PostMapping("/client/{clientName}")
     @Transactional
-    public ResponseEntity<BillDTO> generateByClient(@PathVariable String clientName){
+    public ResponseEntity<BillDTO> generateByClient(@PathVariable String clientName) {
         return ResponseEntity.ok(billService.generateBillByClient(clientName));
     }
 
-    @PostMapping("/save/by-selection")
+    @PostMapping("/selection")
     @Transactional
-    public ResponseEntity<BillDTO> generateBySelection(@RequestBody OrdersForBillDto requestDto){
+    public ResponseEntity<BillDTO> generateBySelection(@RequestBody OrdersForBillDto requestDto) {
         return ResponseEntity.ok(billService.generateBillBySelection(requestDto.getOrdersId()));
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<BillDTO>> findAll(){
+    @GetMapping
+    public ResponseEntity<List<BillDTO>> findAll() {
         return ResponseEntity.ok(billService.findAll());
     }
 
-
-
-    @GetMapping(value = "/download-pdf/{billId}", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> downloadBillPdf(@PathVariable Long billId) {
+    @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> downloadBillPdf(@PathVariable Long id) {
         try {
-            byte[] pdfBytes = billReportService.generateBillPDF(billId);
+            byte[] pdfBytes = billReportService.generateBillPDF(id);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.setContentLength(pdfBytes.length);
 
-            String filename = "factura_" + billId + ".pdf";
+            String filename = "factura_" + id + ".pdf";
             headers.setContentDispositionFormData("attachment", filename);
 
             return ResponseEntity.ok()
