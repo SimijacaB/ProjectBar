@@ -8,6 +8,9 @@ import com.app.projectbar.domain.dto.order.UpdateOrderDTO;
 import com.app.projectbar.domain.dto.orderItem.OrderItemRequestDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,9 +37,18 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.save(orderRequestDTO));
     }
 
+    /**
+     * Obtiene todas las órdenes paginadas.
+     *
+     * @param page Número de página (0-indexed, por defecto 0)
+     * @param size Tamaño de página (por defecto 30)
+     */
     @GetMapping
-    public ResponseEntity<List<OrderForListResponseDTO>> findAll() {
-        return ResponseEntity.ok(orderService.findAll());
+    public ResponseEntity<Page<OrderForListResponseDTO>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by("date").descending());
+        return ResponseEntity.ok(orderService.findAll(pageable));
     }
 
     @GetMapping("/client/{name}")
@@ -56,28 +68,38 @@ public class OrderController {
     }
 
     /**
-     * Endpoint para que el mesero autenticado vea sus propias órdenes.
-     * No necesita pasar ID, el sistema detecta quién está logueado.
+     * Endpoint para que el mesero autenticado vea sus propias órdenes paginadas.
+     *
+     * @param page Número de página (0-indexed, por defecto 0)
+     * @param size Tamaño de página (por defecto 30)
      */
     @GetMapping("/mine")
-    public ResponseEntity<List<OrderForListResponseDTO>> findMyOrders() {
-        return ResponseEntity.ok(orderService.findMyOrders());
+    public ResponseEntity<Page<OrderForListResponseDTO>> findMyOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by("date").descending());
+        return ResponseEntity.ok(orderService.findMyOrders(pageable));
     }
 
     /**
      * Endpoint para que el mesero autenticado vea sus órdenes filtradas por rango
-     * de fechas.
-     * 
+     * de fechas con paginación.
+     *
      * @param startDate Fecha de inicio (formato: yyyy-MM-dd)
      * @param endDate   Fecha de fin (formato: yyyy-MM-dd)
+     * @param page      Número de página (0-indexed, por defecto 0)
+     * @param size      Tamaño de página (por defecto 30)
      */
     @GetMapping("/mine/date-range")
-    public ResponseEntity<List<OrderForListResponseDTO>> findMyOrdersByDateRange(
+    public ResponseEntity<Page<OrderForListResponseDTO>> findMyOrdersByDateRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size) {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59, 999999999);
-        return ResponseEntity.ok(orderService.findMyOrdersByDateRange(startDateTime, endDateTime));
+        PageRequest pageable = PageRequest.of(page, size, Sort.by("date").descending());
+        return ResponseEntity.ok(orderService.findMyOrdersByDateRange(startDateTime, endDateTime, pageable));
     }
 
     @GetMapping("/date/{date}")
@@ -86,18 +108,23 @@ public class OrderController {
     }
 
     /**
-     * Endpoint para filtrar órdenes por rango de fechas (Admin).
-     * 
+     * Endpoint para filtrar órdenes por rango de fechas (Admin) con paginación.
+     *
      * @param startDate Fecha de inicio (formato: yyyy-MM-dd)
      * @param endDate   Fecha de fin (formato: yyyy-MM-dd)
+     * @param page      Número de página (0-indexed, por defecto 0)
+     * @param size      Tamaño de página (por defecto 30)
      */
     @GetMapping("/date-range")
-    public ResponseEntity<List<OrderForListResponseDTO>> findByDateRange(
+    public ResponseEntity<Page<OrderForListResponseDTO>> findByDateRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size) {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59, 999999999);
-        return ResponseEntity.ok(orderService.findByDateRange(startDateTime, endDateTime));
+        PageRequest pageable = PageRequest.of(page, size, Sort.by("date").descending());
+        return ResponseEntity.ok(orderService.findByDateRange(startDateTime, endDateTime, pageable));
     }
 
     @GetMapping("/table/{tableNumber}/grouped-by-client")

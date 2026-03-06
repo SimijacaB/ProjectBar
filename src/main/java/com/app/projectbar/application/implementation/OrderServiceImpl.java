@@ -21,6 +21,8 @@ import com.app.projectbar.infra.repositories.IOrderTableRepository;
 import com.app.projectbar.infra.repositories.IProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -76,6 +78,11 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
+    public Page<OrderForListResponseDTO> findAll(Pageable pageable) {
+        return orderRepository.findAll(pageable).map(orderMapper::toListDTO);
+    }
+
+    @Override
     public OrderResponseDTO findById(Long id) {
         Order order = findOrderByIdOrThrow(id);
         return orderMapper.toResponseDTO(order);
@@ -123,10 +130,24 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
+    public Page<OrderForListResponseDTO> findMyOrders(Pageable pageable) {
+        String waiterUsername = getAuthenticatedWaiterUsername();
+        return orderRepository.findByWaiterUserName(waiterUsername, pageable).map(orderMapper::toListDTO);
+    }
+
+    @Override
     public List<OrderForListResponseDTO> findMyOrdersByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         String waiterUsername = getAuthenticatedWaiterUsername();
         List<Order> orders = orderRepository.findByWaiterUserNameAndDateBetween(waiterUsername, startDate, endDate);
         return orderMapper.toListDTOList(orders);
+    }
+
+    @Override
+    public Page<OrderForListResponseDTO> findMyOrdersByDateRange(LocalDateTime startDate, LocalDateTime endDate,
+            Pageable pageable) {
+        String waiterUsername = getAuthenticatedWaiterUsername();
+        return orderRepository.findPagedByWaiterUserNameAndDateBetween(waiterUsername, startDate, endDate, pageable)
+                .map(orderMapper::toListDTO);
     }
 
     @Override
@@ -139,6 +160,13 @@ public class OrderServiceImpl implements IOrderService {
     @Override
     public List<OrderForListResponseDTO> findByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         return orderMapper.toListDTOList(orderRepository.findByDateBetween(startDate, endDate));
+    }
+
+    @Override
+    public Page<OrderForListResponseDTO> findByDateRange(LocalDateTime startDate, LocalDateTime endDate,
+            Pageable pageable) {
+        return orderRepository.findPagedByDateBetween(startDate, endDate, pageable)
+                .map(orderMapper::toListDTO);
     }
 
     @Override

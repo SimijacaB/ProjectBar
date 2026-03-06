@@ -21,6 +21,8 @@ import com.app.projectbar.infra.repositories.IOrderTableRepository;
 import lombok.RequiredArgsConstructor;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -169,6 +171,12 @@ public class BillServiceImpl implements IBillService, IBillReportService {
     public List<BillDTO> findAll() {
         List<Bill> listBill = billRepository.findAll();
         return billMapper.toDTOList(listBill);
+    }
+
+    @Override
+    public Page<BillDTO> findAll(String clientName, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        return billRepository.findByFilters(clientName, startDate, endDate, pageable)
+                .map(billMapper::toDTO);
     }
 
     @Override
