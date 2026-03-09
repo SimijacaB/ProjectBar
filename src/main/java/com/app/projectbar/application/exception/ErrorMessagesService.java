@@ -20,7 +20,13 @@ public enum ErrorMessagesService {
     // PRODUCTS
     PRODUCT_NOT_FOUND_BY_ID("Product not found with id: %s"),
     PRODUCT_NOT_FOUND_BY_NAME("Product not found with name: %s"),
+    PRODUCT_NOT_FOUND_BY_CODE("Product not found with code: %s"),
     PRODUCT_ID_OR_NAME_REQUIRED("Product ID or name is required."),
+    PRODUCT_NAME_ALREADY_EXISTS("We already have a product with that name."),
+    PRODUCT_CODE_ALREADY_EXISTS("We already have a product with that code."),
+
+    // INGREDIENTS
+    INGREDIENT_NOT_FOUND_EXCEPTION("Ingredient not found."),
 
     // INVENTORY
     INSUFFICIENT_INGREDIENT_INVENTORY("Insufficient inventory of ingredient '%s' for product '%s'. %s"),

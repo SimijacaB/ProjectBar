@@ -5,6 +5,8 @@ import com.app.projectbar.application.exception.bill.BillNotFoundByNumberExcepti
 import com.app.projectbar.application.exception.orders.OrderNotFoundByIdException;
 import com.app.projectbar.application.exception.orders.OrdersAlreadyBilledException;
 import com.app.projectbar.application.exception.orders.OrdersNotFoundByStatusException;
+import com.app.projectbar.application.exception.product.ProductAlreadyExistsException;
+import com.app.projectbar.application.exception.product.ProductNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -70,4 +72,25 @@ public class GlobalExceptionHandler {
         errorResponse.put("message", ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
+
+
+
+    // Products
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleProductNotFoundException(ProductNotFoundException ex){
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("message", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ProductAlreadyExistsException.class)
+    public ResponseEntity<Map<String, String>> handleProductAlreadyExistsException(ProductAlreadyExistsException ex){
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("message", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+
+
+
 }
