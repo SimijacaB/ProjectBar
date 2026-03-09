@@ -19,6 +19,7 @@ public enum ErrorMessagesService {
 
     // PRODUCTS
     PRODUCT_NOT_FOUND_BY_ID("Product not found with id: %s"),
+    PRODUCT_NOT_FOUND_BY_CODE("Product not found with code: %s"),
     PRODUCT_NOT_FOUND_BY_NAME("Product not found with name: %s"),
     PRODUCT_NOT_FOUND_BY_CODE("Product not found with code: %s"),
     PRODUCT_ID_OR_NAME_REQUIRED("Product ID or name is required."),
@@ -31,12 +32,24 @@ public enum ErrorMessagesService {
     // INVENTORY
     INSUFFICIENT_INGREDIENT_INVENTORY("Insufficient inventory of ingredient '%s' for product '%s'. %s"),
     INSUFFICIENT_PRODUCT_INVENTORY("Insufficient inventory of product '%s'. %s"),
+    INVENTORY_NOT_FOUND_BY_CODE("Inventory not found with code: %s"),
+    INVENTORY_ALREADY_EXISTS("Inventory already exists with code: %s"),
+    PRODUCT_OR_INGREDIENT_NOT_FOUND_BY_CODE("Product or Ingredient not found with code: %s"),
+    PREPARED_PRODUCT_CANNOT_HAVE_INVENTORY("Cannot create inventory for prepared products. Their availability depends on ingredient stock."),
+    INSUFFICIENT_INVENTORY_TO_DEDUCT("There is not enough inventory to deduct for code: %s"),
+
+    // INGREDIENTS
+    INGREDIENT_NOT_FOUND_BY_ID("Ingredient not found with id: %s"),
+    INGREDIENT_NOT_FOUND_BY_CODE("Ingredient not found with code: %s"),
+    INGREDIENT_ID_REQUIRED("Ingredient id is required to update"),
+    INGREDIENT_ALREADY_EXISTS_BY_CODE("Another ingredient with code '%s' already exists"),
 
     // TABLE
     TABLE_NOT_FOUND_BY_NUMBER("Table not found with number: %s. Please create the table first."),
 
     // AUTH
     USER_NOT_AUTHENTICATED("User must be authenticated to perform this action."),
+    INVALID_CREDENTIALS("Invalid email or password"),
 
     // BILLS
     BILL_NOT_FOUND_BY_ID_EXCEPTION("We haven't found a bill with this id."),

@@ -1,5 +1,8 @@
 package com.app.projectbar.application.implementation;
 
+import com.app.projectbar.application.exception.ErrorMessagesService;
+import com.app.projectbar.application.exception.ingredient.IngredientAlreadyExistsException;
+import com.app.projectbar.application.exception.ingredient.IngredientNotFoundException;
 import com.app.projectbar.application.interfaces.IIngredientService;
 import com.app.projectbar.application.mapper.IngredientMapper;
 import com.app.projectbar.domain.dto.ingredient.IngredientRequestDTO;
@@ -18,14 +21,19 @@ public class IngredientServiceImpl implements IIngredientService {
 
     private final IIngredientRepository ingredientRepository;
     private final IngredientMapper ingredientMapper;
+
     @Override
     public IngredientResponseDTO findById(Long id) {
-        return ingredientMapper.toResponseDTO(ingredientRepository.findById(id).orElseThrow(() -> new RuntimeException("Ingredient with id " + id + " not found")));
+        return ingredientMapper.toResponseDTO(ingredientRepository.findById(id)
+                .orElseThrow(() -> new IngredientNotFoundException(
+                        String.format(ErrorMessagesService.INGREDIENT_NOT_FOUND_BY_ID.getMessage(), id))));
     }
 
     @Override
     public IngredientResponseDTO findByCode(String code) {
-        return ingredientMapper.toResponseDTO(ingredientRepository.findByCode(code).orElseThrow(() -> new RuntimeException("Ingredient with code " + code + " not found")));
+        return ingredientMapper.toResponseDTO(ingredientRepository.findByCode(code)
+                .orElseThrow(() -> new IngredientNotFoundException(
+                        String.format(ErrorMessagesService.INGREDIENT_NOT_FOUND_BY_CODE.getMessage(), code))));
     }
 
     @Override
@@ -39,18 +47,19 @@ public class IngredientServiceImpl implements IIngredientService {
         return ingredientMapper.toResponseDTO(ingredient);
     }
 
-
     @Override
     public IngredientResponseDTO update(UpdateIngredientDTO updateIngredient) {
         if (updateIngredient.getId() == null) {
-            throw new RuntimeException("Ingredient id is required to update");
+            throw new IllegalArgumentException(ErrorMessagesService.INGREDIENT_ID_REQUIRED.getMessage());
         }
         var existing = ingredientRepository.findByCode(updateIngredient.getCode());
         if (existing.isPresent() && !existing.get().getId().equals(updateIngredient.getId())) {
-            throw new RuntimeException("Another ingredient with code " + updateIngredient.getCode() + " already exists");
+            throw new IngredientAlreadyExistsException(
+                    String.format(ErrorMessagesService.INGREDIENT_ALREADY_EXISTS_BY_CODE.getMessage(), updateIngredient.getCode()));
         }
         var ingredient = ingredientRepository.findById(updateIngredient.getId())
-                .orElseThrow(() -> new RuntimeException("Ingredient with id " + updateIngredient.getId() + " not found"));
+                .orElseThrow(() -> new IngredientNotFoundException(
+                        String.format(ErrorMessagesService.INGREDIENT_NOT_FOUND_BY_ID.getMessage(), updateIngredient.getId())));
         ingredient.setCode(updateIngredient.getCode());
         ingredient.setName(updateIngredient.getName());
         ingredient.setUnitOfMeasure(UnitOfMeasure.valueOf(updateIngredient.getUnitOfMeasure()));
@@ -62,4 +71,3 @@ public class IngredientServiceImpl implements IIngredientService {
         ingredientRepository.deleteByCode(code);
     }
 }
-

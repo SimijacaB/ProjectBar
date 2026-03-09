@@ -1,5 +1,8 @@
 package com.app.projectbar.application.implementation;
 
+import com.app.projectbar.application.exception.ErrorMessagesService;
+import com.app.projectbar.application.exception.auth.InvalidCredentialsException;
+import com.app.projectbar.application.interfaces.IAuthService;
 import com.app.projectbar.domain.securityDtos.LoginRequestDTO;
 import com.app.projectbar.domain.securityDtos.LoginResponseDTO;
 import com.app.projectbar.domain.UserEntity;
@@ -10,7 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuthService {
+public class AuthService implements IAuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
@@ -24,18 +27,21 @@ public class AuthService {
         this.jwtUtil = jwtUtil;
     }
 
+    @Override
     public LoginResponseDTO authenticate(LoginRequestDTO loginRequest) {
+        String email = loginRequest.getEmail();
         String username = loginRequest.getUsername();
 
-        UserEntity user = userRepository.findById(username)
+        UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
-                    log.warn("Intento de login fallido: usuario '{}' no encontrado", username);
-                    return new RuntimeException("Invalid username or password");
+                    log.warn("Intento de login fallido: email '{}' no encontrado", email);
+                    return new InvalidCredentialsException(
+                            ErrorMessagesService.INVALID_CREDENTIALS.getMessage());
                 });
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             log.warn("Intento de login fallido: contraseña incorrecta para usuario '{}'", username);
-            throw new RuntimeException("Invalid username or password");
+            throw new InvalidCredentialsException(ErrorMessagesService.INVALID_CREDENTIALS.getMessage());
         }
 
         // Validar que la cuenta no esté bloqueada o deshabilitada

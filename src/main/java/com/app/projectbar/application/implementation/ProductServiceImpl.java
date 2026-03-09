@@ -50,20 +50,20 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public ProductResponseDTO findByNameExact(String name) {
         var product = productRepository.findOneByName(name)
-                .orElseThrow(() -> new ProductNotFoundException(ErrorMessagesService.PRODUCT_NOT_FOUND_BY_NAME.getMessage()));
+                .orElseThrow(() -> new ProductNotFoundException(
+                        String.format(ErrorMessagesService.PRODUCT_NOT_FOUND_BY_NAME.getMessage(), name)));
         return productMapper.toResponseDTO(product);
     }
 
     @Override
     public ProductResponseDTO save(ProductRequestDTO productRequest) {
-        // Validar si el producto ya existe por nombre
         if (productRepository.existsByNameIgnoreCase(productRequest.getName())) {
-            throw new ProductAlreadyExistsException(ErrorMessagesService.PRODUCT_NAME_ALREADY_EXISTS.getMessage());
+            throw new ProductAlreadyExistsException(
+                    String.format(ErrorMessagesService.PRODUCT_ALREADY_EXISTS_BY_NAME.getMessage(), productRequest.getName()));
         }
-
-        // Validar si el producto ya existe por código
         if (productRepository.existsByCode(productRequest.getCode())) {
-            throw new ProductAlreadyExistsException(ErrorMessagesService.PRODUCT_CODE_ALREADY_EXISTS.getMessage());
+            throw new ProductAlreadyExistsException(
+                    String.format(ErrorMessagesService.PRODUCT_ALREADY_EXISTS_BY_CODE.getMessage(), productRequest.getCode()));
         }
 
         var product = new Product();
@@ -73,44 +73,45 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public ProductResponseDTO update(UpdateProductRequestDTO productRequestDTO) {
         var product = productRepository.findById(productRequestDTO.getId())
-                .orElseThrow(() -> new ProductNotFoundException(ErrorMessagesService.PRODUCT_NOT_FOUND_BY_ID.getMessage()));
+                .orElseThrow(() -> new ProductNotFoundException(
+                        String.format(ErrorMessagesService.PRODUCT_NOT_FOUND_BY_ID.getMessage(), productRequestDTO.getId())));
 
-        // Validaciones para evitar colisiones cuando se actualiza nombre o código
         if (!product.getName().equalsIgnoreCase(productRequestDTO.getName())
                 && productRepository.existsByNameIgnoreCase(productRequestDTO.getName())) {
-            throw new ProductAlreadyExistsException(ErrorMessagesService.PRODUCT_NAME_ALREADY_EXISTS.getMessage());
+            throw new ProductAlreadyExistsException(
+                    String.format(ErrorMessagesService.PRODUCT_ALREADY_EXISTS_BY_NAME.getMessage(), productRequestDTO.getName()));
         }
 
         if (!product.getCode().equals(productRequestDTO.getCode())
                 && productRepository.existsByCode(productRequestDTO.getCode())) {
-            throw new ProductAlreadyExistsException(ErrorMessagesService.PRODUCT_CODE_ALREADY_EXISTS.getMessage());
+            throw new ProductAlreadyExistsException(
+                    String.format(ErrorMessagesService.PRODUCT_ALREADY_EXISTS_BY_CODE.getMessage(), productRequestDTO.getCode()));
         }
 
         ProductRequestDTO mapped = productMapper.updateToRequest(productRequestDTO);
-
         return saveOrUpdate(product, mapped);
     }
 
     @Override
     public void delete(String code) {
         var product = productRepository.findByCode(code);
-
         product.ifPresentOrElse(productRepository::delete, () -> {
-            throw new ProductNotFoundException(ErrorMessagesService.PRODUCT_NOT_FOUND_BY_CODE.getMessage());
+            throw new ProductNotFoundException(
+                    String.format(ErrorMessagesService.PRODUCT_NOT_FOUND_BY_CODE.getMessage(), code));
         });
     }
 
     @Override
     public ProductResponseDTO toggleActive(Long id) {
         var product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException(ErrorMessagesService.PRODUCT_NOT_FOUND_BY_ID.getMessage()));
+                .orElseThrow(() -> new ProductNotFoundException(
+                        String.format(ErrorMessagesService.PRODUCT_NOT_FOUND_BY_ID.getMessage(), id)));
         product.setActive(!Boolean.TRUE.equals(product.getActive()));
         return productMapper.toResponseDTO(productRepository.save(product));
     }
 
     @Override
     public List<ProductForListResponseDTO> findByCategory(Category category) {
-
         return productMapper.toListDTOList(productRepository.findByCategory(category));
     }
 
@@ -129,14 +130,13 @@ public class ProductServiceImpl implements IProductService {
         product.setIsPrepared(productRequest.getIsPrepared());
         product.setCategory(productRequest.getCategory());
 
-        // Actualizar las relaciones de ProductIngredient
         List<ProductIngredient> existingIngredients = product.getProductIngredients();
         List<ProductIngredient> newIngredients = productRequest.getIngredients()
                 .stream()
                 .map(piRequest -> {
                     Ingredient ingredient = ingredientRepository.findById(piRequest.getIngredientId())
                             .orElseThrow(() -> new IngredientNotFoundException(
-                                    ErrorMessagesService.INGREDIENT_NOT_FOUND_EXCEPTION.getMessage()));
+                                    String.format(ErrorMessagesService.INGREDIENT_NOT_FOUND_BY_ID.getMessage(), piRequest.getIngredientId())));
                     return ProductIngredient.builder()
                             .product(product)
                             .ingredient(ingredient)
@@ -145,12 +145,10 @@ public class ProductServiceImpl implements IProductService {
                 })
                 .toList();
 
-        // Eliminar ingredientes que ya no están en la lista
         existingIngredients
                 .removeIf(existingIngredient -> newIngredients.stream().noneMatch(newIngredient -> newIngredient
                         .getIngredient().getId().equals(existingIngredient.getIngredient().getId())));
 
-        // Agregar o actualizar ingredientes
         for (ProductIngredient newIngredient : newIngredients) {
             existingIngredients.stream()
                     .filter(existingIngredient -> existingIngredient.getIngredient().getId()

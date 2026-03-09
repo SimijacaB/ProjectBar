@@ -2,6 +2,8 @@ server:
   port: 8090
 
 spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -10,20 +12,16 @@ spring:
     password: ${DB_PASSWORD:root}
 
   jpa:
-    hibernate:
-      ddl-auto: update
     database: mysql
     database-platform: org.hibernate.dialect.MySQL8Dialect
-    show-sql: ${SHOW_SQL:true}
     properties:
       hibernate:
         format_sql: true
 
 security:
   jwt:
-    # IMPORTANTE: Esta variable DEBE estar configurada en variables de entorno
-    # No hay valor por defecto - el sistema fallará al iniciar si no está configurada
-    secret-key: ${JWT_SECRET_KEY:MiSecretKeyParaDesarrolloQueEsMuyLargaYSegura123456}
+    # La secret key debe configurarse via variable de entorno JWT_SECRET_KEY
+    # En desarrollo, usar el perfil 'dev' que tiene un valor por defecto
     expiration-time: ${JWT_EXPIRATION_TIME:3600000}
 
 logging:
@@ -36,3 +34,31 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
   file:
     name: logs/application.log
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+security:
+  jwt:
+    secret-key: ${JWT_SECRET_KEY:dev-only-secret-key-change-before-production-use}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+security:
+  jwt:
+    secret-key: ${JWT_SECRET_KEY}

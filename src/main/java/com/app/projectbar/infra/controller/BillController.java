@@ -13,7 +13,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -29,19 +28,16 @@ public class BillController {
     private final IBillReportService billReportService;
 
     @PostMapping("/table/{numberTable}/{clientName}")
-    @Transactional
     public ResponseEntity<BillDTO> generateByTable(@PathVariable Integer numberTable, @PathVariable String clientName) {
         return ResponseEntity.ok(billService.generateBillByTable(numberTable, clientName));
     }
 
     @PostMapping("/client/{clientName}")
-    @Transactional
     public ResponseEntity<BillDTO> generateByClient(@PathVariable String clientName) {
         return ResponseEntity.ok(billService.generateBillByClient(clientName));
     }
 
     @PostMapping("/selection")
-    @Transactional
     public ResponseEntity<BillDTO> generateBySelection(@RequestBody OrdersForBillDto requestDto) {
         return ResponseEntity.ok(billService.generateBillBySelection(requestDto.getOrdersId()));
     }

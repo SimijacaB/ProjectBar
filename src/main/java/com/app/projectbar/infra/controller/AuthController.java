@@ -1,8 +1,8 @@
 package com.app.projectbar.infra.controller;
 
+import com.app.projectbar.application.interfaces.IAuthService;
 import com.app.projectbar.domain.securityDtos.LoginRequestDTO;
 import com.app.projectbar.domain.securityDtos.LoginResponseDTO;
-import com.app.projectbar.application.implementation.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,7 +17,7 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final AuthService authService;
+    private final IAuthService authService;
     private final com.app.projectbar.application.implementation.TokenBlacklistService tokenBlacklistService;
     private final com.app.projectbar.application.implementation.JwtUtil jwtUtil;
 
@@ -46,7 +46,6 @@ public class AuthController {
         }
 
         String username = authentication.getName();
-        // Assuming roles are in authorities
         var roles = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
