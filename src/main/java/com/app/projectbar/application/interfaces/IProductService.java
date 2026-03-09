@@ -24,6 +24,8 @@ public interface IProductService {
 
     void delete(String code);
 
+    ProductResponseDTO toggleActive(Long id);
+
     List<ProductForListResponseDTO> findByCategory(Category category);
 
     List<ProductForListResponseDTO> findByNameContaining(String name);

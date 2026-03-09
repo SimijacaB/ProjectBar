@@ -19,8 +19,10 @@ public class ProductForListResponseDTO {
     private String description;
     private Category category;
     private Double price;
-    
+
     @JsonProperty("isPrepared")
     private Boolean isPrepared;
+
+    private Boolean active;
 
 }

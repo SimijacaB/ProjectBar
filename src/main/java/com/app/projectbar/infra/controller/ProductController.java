@@ -73,4 +73,9 @@ public class ProductController {
     public void delete(@PathVariable String code) {
         productService.delete(code);
     }
+
+    @PatchMapping("/{id}/active")
+    public ResponseEntity<ProductResponseDTO> toggleActive(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.toggleActive(id));
+    }
 }

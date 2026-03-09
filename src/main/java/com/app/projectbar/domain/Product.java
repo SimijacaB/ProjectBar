@@ -41,7 +41,10 @@ public class Product {
     @Enumerated(EnumType.STRING)
     private Category category;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private Boolean active = true;
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductIngredient> productIngredients = new ArrayList<>(); ;
+    private List<ProductIngredient> productIngredients = new ArrayList<>();;
 
 }

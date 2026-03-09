@@ -22,6 +22,7 @@ public class ProductResponseDTO {
     private Long photoId;
     private Boolean isPrepared;
     private String category;
+    private Boolean active;
     private List<ProductIngredientResponseDTO> ingredients;
 
 }
