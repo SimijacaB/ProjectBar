@@ -7,6 +7,7 @@ import com.app.projectbar.application.exception.orders.*;
 import com.app.projectbar.application.exception.product.ProductNotFoundException;
 import com.app.projectbar.application.exception.table.TableNotFoundException;
 import com.app.projectbar.application.interfaces.IInventoryService;
+import com.app.projectbar.application.interfaces.IOrderNotificationService;
 import com.app.projectbar.application.interfaces.IOrderService;
 import com.app.projectbar.application.mapper.OrderMapper;
 import com.app.projectbar.domain.*;
@@ -46,6 +47,7 @@ public class OrderServiceImpl implements IOrderService {
     private final IProductRepository productRepository;
     private final IInventoryService inventoryService;
     private final IOrderTableRepository orderTableRepository;
+    private final IOrderNotificationService notificationService;
     private final OrderMapper orderMapper;
 
     @Override
@@ -64,12 +66,17 @@ public class OrderServiceImpl implements IOrderService {
         Order newOrder = buildOrder(orderRequest, assignedWaiter, initialStatus);
         processOrderItems(orderRequest, newOrder);
 
+        Order savedOrder = orderRepository.save(newOrder);
+
+        // Notificar nueva orden a admin, meseros, bartender y chef
+        notificationService.notifyNewOrder(savedOrder);
+
         log.info("Order created for table {} - Mode: {}, Status: {}",
                 orderRequest.getTableNumber(),
                 isCustomerSelfServiceOrder ? "Customer self-service (QR)" : "Waiter",
                 initialStatus);
 
-        return orderMapper.toResponseDTO(orderRepository.save(newOrder));
+        return orderMapper.toResponseDTO(savedOrder);
     }
 
     @Override
@@ -219,13 +226,23 @@ public class OrderServiceImpl implements IOrderService {
     @Transactional
     public OrderResponseDTO changeStatus(Long id, String newStatus) {
         Order order = findOrderByIdOrThrow(id);
+        OrderStatus oldStatus = order.getStatus();
         OrderStatus targetStatus = OrderStatus.valueOf(newStatus);
 
         validateStatusTransition(order, targetStatus);
         order.setStatus(targetStatus);
 
-        log.info("Order {} status changed to {}", id, targetStatus);
-        return orderMapper.toResponseDTO(orderRepository.save(order));
+        Order savedOrder = orderRepository.save(order);
+
+        // Notificar cambio de estado
+        if (targetStatus == OrderStatus.CANCELLED) {
+            notificationService.notifyOrderCancelled(savedOrder);
+        } else {
+            notificationService.notifyOrderStatusChanged(savedOrder, oldStatus, targetStatus);
+        }
+
+        log.info("Order {} status changed from {} to {}", id, oldStatus, targetStatus);
+        return orderMapper.toResponseDTO(savedOrder);
     }
 
     @Override
@@ -242,8 +259,13 @@ public class OrderServiceImpl implements IOrderService {
         order.setWaiterUserName(waiterUsername);
         order.setStatus(OrderStatus.ASSIGNED);
 
+        Order savedOrder = orderRepository.save(order);
+
+        // Notificar que la orden fue asignada a un mesero específico
+        notificationService.notifyOrderAssigned(savedOrder, waiterUsername);
+
         log.info("Waiter {} assigned to order {}", waiterUsername, orderId);
-        return orderMapper.toResponseDTO(orderRepository.save(order));
+        return orderMapper.toResponseDTO(savedOrder);
     }
 
     @Override

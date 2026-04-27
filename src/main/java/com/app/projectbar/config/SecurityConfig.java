@@ -22,9 +22,11 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitFilter rateLimitFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, RateLimitFilter rateLimitFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.rateLimitFilter = rateLimitFilter;
     }
 
     @Bean
@@ -42,6 +44,9 @@ public class SecurityConfig {
 
                         // Órdenes - Los clientes pueden crear órdenes vía QR (SELF_SERVICE)
                         .requestMatchers(HttpMethod.POST, "/api/orders").permitAll()
+
+                        // WebSocket endpoints - permitir sin autenticación (JWT va en headers)
+                        .requestMatchers("/ws/**").permitAll()
 
                         // ==================== AUTENTICACIÓN ====================
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
@@ -127,6 +132,7 @@ public class SecurityConfig {
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();

@@ -32,6 +32,11 @@ public class OrderTable {
     private Integer capacity;
 
     /**
+     * Ubicación de la mesa dentro del bar (ej. "terraza", "patio", "comedor", "barra").
+     */
+    private String location;
+
+    /**
      * Estado de la mesa:
      * - FREE: Disponible para nuevos clientes
      * - OCCUPIED: Con clientes y órdenes activas

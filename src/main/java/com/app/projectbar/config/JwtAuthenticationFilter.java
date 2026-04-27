@@ -1,6 +1,7 @@
 package com.app.projectbar.config;
 
 import com.app.projectbar.application.implementation.JwtUtil;
+import com.app.projectbar.application.implementation.TokenBlacklistService;
 import com.app.projectbar.application.implementation.UserServiceSecurity;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -28,10 +29,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserServiceSecurity userServiceSecurity;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil, UserServiceSecurity userServiceSecurity) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, UserServiceSecurity userServiceSecurity,
+                               TokenBlacklistService tokenBlacklistService) {
         this.jwtUtil = jwtUtil;
         this.userServiceSecurity = userServiceSecurity;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
@@ -44,6 +48,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
+
+            // Verificar si el token está en la blacklist (logout)
+            if (tokenBlacklistService.isBlacklisted(token)) {
+                log.warn("Intento de uso de token revocdo: {}", request.getRequestURI());
+                response.setHeader("X-Token-Revoked", "true");
+                filterChain.doFilter(request, response);
+                return;
+            }
 
             try {
                 username = jwtUtil.extractUsername(token);

@@ -15,6 +15,7 @@ public class OrderTableResponseDTO {
     private Long id;
     private Integer number;
     private Integer capacity;
+    private String location;
     private OrderTableStatus status;
     private String notes;
     private Integer activeOrdersCount; // Número de órdenes activas en esta mesa

@@ -18,11 +18,24 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final com.app.projectbar.application.implementation.TokenBlacklistService tokenBlacklistService;
+    private final com.app.projectbar.application.implementation.JwtUtil jwtUtil;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequest) {
         LoginResponseDTO response = authService.authenticate(loginRequest);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            var expirationTime = jwtUtil.getExpirationTime(token);
+            tokenBlacklistService.addToBlacklist(token, expirationTime);
+            return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+        }
+        return ResponseEntity.badRequest().body(Map.of("error", "No token provided"));
     }
 
     @GetMapping("/me")

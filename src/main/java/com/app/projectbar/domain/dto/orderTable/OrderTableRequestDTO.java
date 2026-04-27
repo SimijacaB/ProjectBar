@@ -21,5 +21,10 @@ public class OrderTableRequestDTO {
     @Min(value = 1, message = "La capacidad debe ser mayor a 0")
     private Integer capacity;
 
+    /**
+     * Ubicación de la mesa dentro del bar (ej. "terraza", "patio", "comedor", "barra").
+     */
+    private String location;
+
     private String notes;
 }
