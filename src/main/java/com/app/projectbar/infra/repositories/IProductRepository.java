@@ -18,6 +18,15 @@ public interface IProductRepository extends JpaRepository <Product, Long>{
     FROM Product p
     LEFT JOIN FETCH p.productIngredients pi
     LEFT JOIN FETCH pi.ingredient
+    WHERE p.id = :id
+    """)
+    Optional<Product> findById(@Param("id") Long id);
+
+    @Query("""
+    SELECT p
+    FROM Product p
+    LEFT JOIN FETCH p.productIngredients pi
+    LEFT JOIN FETCH pi.ingredient
     WHERE p.code = :code
     """)
     Optional<Product> findByCode(@Param("code")String code);
@@ -39,6 +48,9 @@ public interface IProductRepository extends JpaRepository <Product, Long>{
 
     // Nuevos métodos para validaciones rápidas de unicidad (más eficientes que traer todo el objeto)
     boolean existsByNameIgnoreCase(String name);
+
+    @Query("SELECT COUNT(p) > 0 FROM Product p WHERE LOWER(p.name) = LOWER(:name) AND p.id != :id")
+    boolean existsByNameIgnoreCaseAndIdNot(@Param("name") String name, @Param("id") Long id);
 
     boolean existsByCode(String code);
 

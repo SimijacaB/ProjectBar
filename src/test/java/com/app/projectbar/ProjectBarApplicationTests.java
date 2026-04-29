@@ -1,13 +1,15 @@
 package com.app.projectbar;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-@SpringBootTest
 class ProjectBarApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+        BCryptPasswordEncoder e = new BCryptPasswordEncoder();
+        System.out.println("ADMIN_HASH: " + e.encode("admin"));
+        System.out.println("MESERO_HASH: " + e.encode("mesero"));
+    }
 
 }

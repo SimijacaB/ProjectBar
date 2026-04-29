@@ -1,15 +1,19 @@
 package com.app.projectbar.infra.errorHandler;
 
-import com.app.projectbar.application.exception.auth.InvalidCredentialsException;
-import com.app.projectbar.application.exception.auth.UserNotAuthenticatedException;
 import com.app.projectbar.application.exception.bill.BillNotFoundByIdException;
 import com.app.projectbar.application.exception.bill.BillNotFoundByNumberException;
 
 import com.app.projectbar.application.exception.orders.OrderNotFoundByIdException;
 import com.app.projectbar.application.exception.orders.OrdersAlreadyBilledException;
 import com.app.projectbar.application.exception.orders.OrdersNotFoundByStatusException;
+import com.app.projectbar.application.exception.orders.OrderItemNotFoundException;
+import com.app.projectbar.application.exception.orders.OrderMustHaveProductsException;
+import com.app.projectbar.application.exception.orders.InvalidOrderStatusTransitionException;
+import com.app.projectbar.application.exception.orders.CannotModifyDeliveredOrderException;
 import com.app.projectbar.application.exception.product.ProductAlreadyExistsException;
 import com.app.projectbar.application.exception.product.ProductNotFoundException;
+import com.app.projectbar.application.exception.auth.InvalidCredentialsException;
+import com.app.projectbar.application.exception.auth.UserNotAuthenticatedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -48,6 +52,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    // ── Auth ─────────────────────────────────────────────────────────────────
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidCredentialsException(InvalidCredentialsException ex) {
+        return unauthorized(ex.getMessage());
+    }
+
+    @ExceptionHandler(UserNotAuthenticatedException.class)
+    public ResponseEntity<Map<String, String>> handleUserNotAuthenticatedException(UserNotAuthenticatedException ex) {
+        return unauthorized(ex.getMessage());
+    }
+
     // ── Orders ──────────────────────────────────────────────────────────────
 
     @ExceptionHandler(OrderNotFoundByIdException.class)
@@ -61,7 +77,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(OrdersNotFoundByStatusException.class)
-    public ResponseEntity<Map<String, String>> handleOrdersNotFoundByStatusException(OrdersNotFoundByStatusException ex) {
+    public ResponseEntity<Map<String, String>> handleOrdersNotFoundByStatusException(
+            OrdersNotFoundByStatusException ex) {
         return notFound(ex.getMessage());
     }
 
@@ -76,12 +93,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InvalidOrderStatusTransitionException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidOrderStatusTransitionException(InvalidOrderStatusTransitionException ex) {
+    public ResponseEntity<Map<String, String>> handleInvalidOrderStatusTransitionException(
+            InvalidOrderStatusTransitionException ex) {
         return badRequest(ex.getMessage());
     }
 
     @ExceptionHandler(CannotModifyDeliveredOrderException.class)
-    public ResponseEntity<Map<String, String>> handleCannotModifyDeliveredOrderException(CannotModifyDeliveredOrderException ex) {
+    public ResponseEntity<Map<String, String>> handleCannotModifyDeliveredOrderException(
+            CannotModifyDeliveredOrderException ex) {
         return conflict(ex.getMessage());
     }
 

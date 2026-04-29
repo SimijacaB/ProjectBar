@@ -38,3 +38,7 @@ logs/
 .env.local
 .env.*.local
 .env.example
+
+### OS Files ###
+opencode.json
+.DS_Store

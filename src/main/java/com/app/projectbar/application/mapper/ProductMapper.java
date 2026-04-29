@@ -28,7 +28,6 @@ public interface ProductMapper {
     @Mapping(target = "ingredientExtend", ignore = true)
     ProductIngredientResponseDTO toProductIngredientResponseDTO(ProductIngredient productIngredient);
 
-    @Mapping(target = "ingredients", ignore = true)
     ProductRequestDTO updateToRequest(UpdateProductRequestDTO updateProductRequestDTO);
 }
 

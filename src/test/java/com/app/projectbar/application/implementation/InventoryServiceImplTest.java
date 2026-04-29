@@ -129,7 +129,7 @@ class InventoryServiceImplTest {
             inventoryService.save(inventoryRequest);
         });
 
-        assertEquals("Product not found by code " + CODE_GINEBRA, exception.getMessage());
+        assertEquals("Product or Ingredient not found with code: " + CODE_GINEBRA, exception.getMessage());
         verify(productRepository).findByCode(inventoryRequest.getCode());
         verify(ingredientRepository).findByCode(inventoryRequest.getCode());
         verify(inventoryRepository, never()).save(any(Inventory.class));
@@ -180,7 +180,7 @@ class InventoryServiceImplTest {
             inventoryService.addStock(quantityToAdd, CODE_PILSEN);
         });
 
-        assertEquals("Inventory not found by code " + CODE_PILSEN, exception.getMessage());
+        assertEquals("Inventory not found with code: " + CODE_PILSEN, exception.getMessage());
     }
 
     @Test
@@ -227,7 +227,7 @@ class InventoryServiceImplTest {
             inventoryService.deductStock(quantityToDeduck, CODE_PILSEN);
         });
 
-        assertEquals("Inventory not found by code " + CODE_PILSEN, exception.getMessage());
+        assertEquals("Inventory not found with code: " + CODE_PILSEN, exception.getMessage());
     }
 
     @Test
@@ -247,7 +247,7 @@ class InventoryServiceImplTest {
             inventoryService.deductStock(quantityToDeduct, CODE_PILSEN);
         });
 
-        assertEquals("There is not enough inventory to discount", exception.getMessage());
+        assertEquals("There is not enough inventory to deduct for code: " + CODE_PILSEN, exception.getMessage());
     }
 
     @Test
@@ -330,7 +330,7 @@ class InventoryServiceImplTest {
             inventoryService.findByCode(CODE_PILSEN);
         });
 
-        assertEquals("Inventory not found by code " +CODE_PILSEN, exception.getMessage());
+        assertEquals("Inventory not found with code: " +CODE_PILSEN, exception.getMessage());
 
     }
 
@@ -362,7 +362,7 @@ class InventoryServiceImplTest {
             inventoryService.deleteByCode(CODE_PILSEN);
         });
 
-        assertEquals("Inventory not found by code " + CODE_PILSEN, exception.getMessage());
+        assertEquals("Inventory not found with code: " + CODE_PILSEN, exception.getMessage());
 
     }
 

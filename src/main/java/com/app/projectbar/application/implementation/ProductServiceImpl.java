@@ -18,6 +18,7 @@ import com.app.projectbar.infra.repositories.IProductRepository;
 import com.app.projectbar.infra.repositories.IIngredientRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import java.text.Normalizer;
 import java.util.List;
 
 @Service
@@ -76,10 +77,20 @@ public class ProductServiceImpl implements IProductService {
                 .orElseThrow(() -> new ProductNotFoundException(
                         String.format(ErrorMessagesService.PRODUCT_NOT_FOUND_BY_ID.getMessage(), productRequestDTO.getId())));
 
-        if (!product.getName().equalsIgnoreCase(productRequestDTO.getName())
-                && productRepository.existsByNameIgnoreCase(productRequestDTO.getName())) {
-            throw new ProductAlreadyExistsException(
-                    String.format(ErrorMessagesService.PRODUCT_ALREADY_EXISTS_BY_NAME.getMessage(), productRequestDTO.getName()));
+        // Check if name actually changed (compare normalized strings to ignore accent differences)
+        String currentNormalized = normalizeString(product.getName());
+        String newNormalized = normalizeString(productRequestDTO.getName());
+
+        if (!currentNormalized.equalsIgnoreCase(newNormalized)) {
+            // Name changed, check if new name exists in ANOTHER product
+            productRepository.findOneByName(productRequestDTO.getName())
+                    .ifPresent(existing -> {
+                        if (!existing.getId().equals(productRequestDTO.getId())) {
+                            throw new ProductAlreadyExistsException(
+                                    String.format(ErrorMessagesService.PRODUCT_ALREADY_EXISTS_BY_NAME.getMessage(),
+                                            productRequestDTO.getName()));
+                        }
+                    });
         }
 
         if (!product.getCode().equals(productRequestDTO.getCode())
@@ -130,46 +141,61 @@ public class ProductServiceImpl implements IProductService {
         product.setIsPrepared(productRequest.getIsPrepared());
         product.setCategory(productRequest.getCategory());
 
-        List<ProductIngredient> existingIngredients = product.getProductIngredients();
-        List<ProductIngredient> newIngredients = productRequest.getIngredients()
-                .stream()
-                .map(piRequest -> {
-                    Ingredient ingredient = ingredientRepository.findById(piRequest.getIngredientId())
-                            .orElseThrow(() -> new IngredientNotFoundException(
-                                    String.format(ErrorMessagesService.INGREDIENT_NOT_FOUND_BY_ID.getMessage(), piRequest.getIngredientId())));
-                    return ProductIngredient.builder()
-                            .product(product)
-                            .ingredient(ingredient)
-                            .amount(piRequest.getAmount())
-                            .build();
-                })
-                .toList();
+        // Solo modificar ingredientes si se envían en el request
+        if (productRequest.getIngredients() != null) {
+            List<ProductIngredient> existingIngredients = product.getProductIngredients();
+            List<ProductIngredient> newIngredients = productRequest.getIngredients()
+                    .stream()
+                    .map(piRequest -> {
+                        Ingredient ingredient = ingredientRepository.findById(piRequest.getIngredientId())
+                                .orElseThrow(() -> new IngredientNotFoundException(
+                                        String.format(ErrorMessagesService.INGREDIENT_NOT_FOUND_BY_ID.getMessage(), piRequest.getIngredientId())));
+                        return ProductIngredient.builder()
+                                .product(product)
+                                .ingredient(ingredient)
+                                .amount(piRequest.getAmount())
+                                .build();
+                    })
+                    .toList();
 
-        existingIngredients
-                .removeIf(existingIngredient -> newIngredients.stream().noneMatch(newIngredient -> newIngredient
-                        .getIngredient().getId().equals(existingIngredient.getIngredient().getId())));
+            existingIngredients
+                    .removeIf(existingIngredient -> newIngredients.stream().noneMatch(newIngredient -> newIngredient
+                            .getIngredient().getId().equals(existingIngredient.getIngredient().getId())));
 
-        for (ProductIngredient newIngredient : newIngredients) {
-            existingIngredients.stream()
-                    .filter(existingIngredient -> existingIngredient.getIngredient().getId()
-                            .equals(newIngredient.getIngredient().getId()))
-                    .findFirst()
-                    .ifPresentOrElse(
-                            existingIngredient -> existingIngredient.setAmount(newIngredient.getAmount()),
-                            () -> existingIngredients.add(newIngredient));
+            for (ProductIngredient newIngredient : newIngredients) {
+                existingIngredients.stream()
+                        .filter(existingIngredient -> existingIngredient.getIngredient().getId()
+                                .equals(newIngredient.getIngredient().getId()))
+                        .findFirst()
+                        .ifPresentOrElse(
+                                existingIngredient -> existingIngredient.setAmount(newIngredient.getAmount()),
+                                () -> existingIngredients.add(newIngredient));
+            }
+
+            product.setProductIngredients(existingIngredients);
         }
 
-        product.setProductIngredients(existingIngredients);
         Product savedProduct = productRepository.save(product);
+        return buildProductResponseDTO(savedProduct);
+    }
 
+    private ProductResponseDTO buildProductResponseDTO(Product savedProduct) {
         ProductResponseDTO productResponseDTO = productMapper.toResponseDTO(savedProduct);
-        for (int i = 0; i < productResponseDTO.getIngredients().size(); i++) {
-            productResponseDTO.getIngredients().get(i)
-                    .setIngredient_id(savedProduct.getProductIngredients().get(i).getIngredient().getId());
-            productResponseDTO.getIngredients().get(i).setIngredientExtend(
-                    savedProduct.getProductIngredients().get(i).getIngredient().getUnitOfMeasure().toString());
+        if (savedProduct.getProductIngredients() != null) {
+            for (int i = 0; i < productResponseDTO.getIngredients().size(); i++) {
+                productResponseDTO.getIngredients().get(i)
+                        .setIngredient_id(savedProduct.getProductIngredients().get(i).getIngredient().getId());
+                productResponseDTO.getIngredients().get(i).setIngredientExtend(
+                        savedProduct.getProductIngredients().get(i).getIngredient().getUnitOfMeasure().toString());
+            }
         }
         return productResponseDTO;
+    }
+
+    private String normalizeString(String input) {
+        if (input == null) return null;
+        return Normalizer.normalize(input, Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
     }
 
 }

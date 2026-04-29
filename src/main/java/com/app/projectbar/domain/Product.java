@@ -45,6 +45,9 @@ public class Product {
     private Boolean active = true;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductIngredient> productIngredients = new ArrayList<>();;
+    private List<ProductIngredient> productIngredients = new ArrayList<>();
+
+    
+    
 
 }
